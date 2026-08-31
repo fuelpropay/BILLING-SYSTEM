@@ -18,6 +18,10 @@ import SmsLog from './pages/SmsLog'
 import Users from './pages/Users'
 import AuditLog from './pages/AuditLog'
 import Settings from './pages/Settings'
+import Promos from './pages/Promos'
+import Devices from './pages/Devices'
+import CaptivePortal from './pages/CaptivePortal'
+import Portal from './pages/Portal'
 
 function Protected() {
   const { authed } = useStore()
@@ -43,11 +47,15 @@ export default function App() {
             <Route path="/reports" element={<Reports />} />
             <Route path="/tickets" element={<Tickets />} />
             <Route path="/expenses" element={<Expenses />} />
+            <Route path="/promos" element={<Promos />} />
+            <Route path="/devices" element={<Devices />} />
+            <Route path="/captive-portal" element={<CaptivePortal />} />
             <Route path="/sms" element={<SmsLog />} />
             <Route path="/users" element={<Users />} />
             <Route path="/audit" element={<AuditLog />} />
             <Route path="/settings" element={<Settings />} />
           </Route>
+          <Route path="/portal" element={<Portal />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </HashRouter>

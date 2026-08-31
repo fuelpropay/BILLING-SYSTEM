@@ -169,9 +169,39 @@ export function seedDB(): DB {
     { id: 'au5', actor: 'felix', action: 'update', entity: 'subscriber', detail: 'Suspended account for non-payment: George Karanja', at: daysAgo(2) },
   ]
 
+  const promos: DB['promos'] = [
+    { id: 'pm1', code: 'WELCOME20', kind: 'percent', value: 20, planId: null, validTo: daysAhead(30), maxUses: 200, usedCount: 43, active: true, createdAt: daysAgo(15) },
+    { id: 'pm2', code: 'WEEKEND100', kind: 'fixed', value: 100, planId: 'pl7', validTo: daysAhead(6), maxUses: 100, usedCount: 61, active: true, createdAt: daysAgo(4) },
+    { id: 'pm3', code: 'FIBRELAUNCH', kind: 'percent', value: 50, planId: 'pl4', validTo: daysAgo(2), maxUses: 50, usedCount: 50, active: false, createdAt: daysAgo(60) },
+  ]
+
+  const deviceLabels = ['iPhone 15', 'Samsung A54', 'Tecno Spark', 'MacBook Pro', 'HP Laptop', 'Android TV', 'Redmi Note', 'iPad']
+  const devices: DB['devices'] = []
+  for (let i = 0; i < 34; i++) {
+    const s = subscribers[(i * 7) % subscribers.length]
+    devices.push({
+      id: `dv${i + 1}`,
+      subscriberId: s.id,
+      label: deviceLabels[i % deviceLabels.length],
+      mac: `DE:AD:BE:${(10 + i).toString(16).toUpperCase().padStart(2, '0')}:${(30 + i).toString(16).toUpperCase().padStart(2, '0')}:${(50 + i).toString(16).toUpperCase().padStart(2, '0')}`,
+      ip: `10.30.${(i % 5) + 1}.${20 + i}`,
+      blocked: i % 13 === 0,
+      dataDownMB: Math.round(200 + ((i * 1553) % 95000)),
+      dataUpMB: Math.round(50 + ((i * 389) % 12000)),
+      lastSeenAt: hoursAgo(i % 72),
+    })
+  }
+
+  const hotspotProfiles: DB['hotspotProfiles'] = [
+    { id: 'hp1', name: 'Cafe Standard', routerId: 'rt2', rateLimitMbps: 5, sessionTimeoutMin: 720, idleTimeoutMin: 15, sharedUsers: 1, roaming: true },
+    { id: 'hp2', name: 'Kiosk Fast', routerId: 'rt3', rateLimitMbps: 10, sessionTimeoutMin: 1440, idleTimeoutMin: 30, sharedUsers: 1, roaming: true },
+    { id: 'hp3', name: 'Event Hall', routerId: 'rt5', rateLimitMbps: 3, sessionTimeoutMin: 240, idleTimeoutMin: 10, sharedUsers: 2, roaming: false },
+    { id: 'hp4', name: 'Ruaka Market', routerId: 'rt4', rateLimitMbps: 5, sessionTimeoutMin: 720, idleTimeoutMin: 20, sharedUsers: 1, roaming: true },
+  ]
+
   return {
     subscribers, plans, invoices, payments, vouchers, routers, sessions,
-    tickets, expenses, sms, users, audit,
+    tickets, expenses, sms, users, audit, promos, devices, hotspotProfiles,
     settings: {
       companyName: 'FuelPro Networks',
       supportEmail: 'support@fuelpro.co.ke',
@@ -181,6 +211,11 @@ export function seedDB(): DB {
       smsSenderId: 'FUELPRO',
       suspendOnExpiry: true,
       graceDays: 3,
+      portalTitle: 'FuelPro Customer Portal',
+      portalWelcome: 'Manage your subscription, check usage and top up instantly.',
+      portalColor: '#1b92f5',
+      portalAllowVoucher: true,
+      portalAllowTopup: true,
     },
   }
 }

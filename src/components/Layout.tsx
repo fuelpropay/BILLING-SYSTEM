@@ -18,6 +18,9 @@ const icons: Record<string, React.ReactNode> = {
   users: <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4 0-9 2-9 6v2h18v-2c0-4-5-6-9-6Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />,
   audit: <path d="M12 8v4l3 3m6-3a9 9 0 1 1-9-9 9 9 0 0 1 9 9Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />,
   settings: <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm7.5-3a7.5 7.5 0 0 0-.1-1.2l2-1.6-2-3.4-2.4 1a7.6 7.6 0 0 0-2-1.2L14.6 3H9.4L9 5.6a7.6 7.6 0 0 0-2 1.2l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 2.4l-2 1.6 2 3.4 2.4-1a7.6 7.6 0 0 0 2 1.2l.4 2.6h5.2l.4-2.6a7.6 7.6 0 0 0 2-1.2l2.4 1 2-3.4-2-1.6c.07-.4.1-.8.1-1.2Z" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />,
+  promos: <path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8ZM7 7h.01" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />,
+  devices: <path d="M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6Zm5 14h6m-3-4v4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />,
+  portal: <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-8 10h16M12 2c2.5 2.7 3.9 6.2 3.9 10S14.5 19.3 12 22c-2.5-2.7-3.9-6.2-3.9-10S9.5 4.7 12 2Z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />,
 }
 
 const nav: { to: string; label: string; icon: string; section?: string }[] = [
@@ -30,8 +33,11 @@ const nav: { to: string; label: string; icon: string; section?: string }[] = [
   { to: '/invoices', label: 'Invoices', icon: 'invoices', section: 'Billing' },
   { to: '/payments', label: 'Payments', icon: 'payments' },
   { to: '/expenses', label: 'Expenses', icon: 'expenses' },
+  { to: '/promos', label: 'Promos & Offers', icon: 'promos' },
   { to: '/routers', label: 'Routers / NAS', icon: 'routers', section: 'Network' },
   { to: '/sessions', label: 'Live Sessions', icon: 'sessions' },
+  { to: '/devices', label: 'Devices & Binding', icon: 'devices' },
+  { to: '/captive-portal', label: 'Captive Portal', icon: 'portal' },
   { to: '/sms', label: 'SMS Center', icon: 'sms', section: 'Communication' },
   { to: '/users', label: 'Staff & Roles', icon: 'users', section: 'Administration' },
   { to: '/audit', label: 'Audit Log', icon: 'audit' },
@@ -79,11 +85,15 @@ export default function Layout() {
             </React.Fragment>
           ))}
         </nav>
-        <div className="p-4 border-t border-slate-200 dark:border-slate-800">
+        <div className="p-4 border-t border-slate-200 dark:border-slate-800 space-y-2">
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span className={`w-2 h-2 rounded-full ${onlineRouters === db.routers.length ? 'bg-emerald-500' : 'bg-amber-500'}`} />
             {onlineRouters}/{db.routers.length} routers online
           </div>
+          <NavLink to="/portal" className="flex items-center gap-2 text-xs font-semibold text-brand-500 hover:underline" onClick={() => setOpen(false)}>
+            <Icon name="portal" />
+            Customer self-service portal
+          </NavLink>
         </div>
       </aside>
 

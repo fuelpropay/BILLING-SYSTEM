@@ -26,7 +26,11 @@
 - **Vouchers** — batch generation, redemption flow that activates subscribers, CSV export
 - **Routers / NAS** — device inventory with uptime, CPU/memory, online/offline control
 - **Live Sessions** — active hotspot/PPPoE sessions with traffic counters and disconnect
-- **Reports** — revenue vs expenses, signups trend, MRR by plan, status distribution
+- **Reports** — revenue vs expenses, churn rate, ARPU, signups trend, MRR by plan, top data consumers
+- **Promos & Offers** — promo codes with percent/fixed discounts, plan scoping, validity windows and usage tracking (redeemable in the customer portal)
+- **Devices & Binding** — MAC-address binding per subscriber, block/unblock, per-device bandwidth accounting
+- **Captive Portal** — brandable hotspot login page with live preview, plus hotspot profiles (rate limit, session/idle timeouts, shared users, hotspot roaming)
+- **Customer Self-Service Portal** (`#/portal`) — public portal where subscribers sign in with username/phone to view balance, plan, data usage, bound devices, invoices and payment history, buy packages via M-Pesa (with promo codes) and redeem vouchers
 - **Support Tickets** — priorities, assignees, status workflow
 - **Expenses** — categorized spend tracking with charts
 - **SMS Center** — message log and broadcast composer

@@ -148,6 +148,47 @@ export interface Settings {
   smsSenderId: string
   suspendOnExpiry: boolean
   graceDays: number
+  portalTitle: string
+  portalWelcome: string
+  portalColor: string
+  portalAllowVoucher: boolean
+  portalAllowTopup: boolean
+}
+
+export interface Promo {
+  id: string
+  code: string
+  kind: 'percent' | 'fixed'
+  value: number
+  planId: string | null
+  validTo: string
+  maxUses: number
+  usedCount: number
+  active: boolean
+  createdAt: string
+}
+
+export interface BoundDevice {
+  id: string
+  subscriberId: string
+  label: string
+  mac: string
+  ip: string
+  blocked: boolean
+  dataDownMB: number
+  dataUpMB: number
+  lastSeenAt: string
+}
+
+export interface HotspotProfile {
+  id: string
+  name: string
+  routerId: string
+  rateLimitMbps: number
+  sessionTimeoutMin: number
+  idleTimeoutMin: number
+  sharedUsers: number
+  roaming: boolean
 }
 
 export interface DB {
@@ -164,4 +205,7 @@ export interface DB {
   users: StaffUser[]
   audit: AuditEntry[]
   settings: Settings
+  promos: Promo[]
+  devices: BoundDevice[]
+  hotspotProfiles: HotspotProfile[]
 }

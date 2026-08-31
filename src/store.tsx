@@ -29,7 +29,18 @@ const Ctx = createContext<StoreCtx | null>(null)
 function loadDB(): DB {
   try {
     const raw = localStorage.getItem(DB_KEY)
-    if (raw) return JSON.parse(raw) as DB
+    if (raw) {
+      const stored = JSON.parse(raw) as Partial<DB>
+      const fresh = seedDB()
+      return {
+        ...fresh,
+        ...stored,
+        promos: stored.promos ?? fresh.promos,
+        devices: stored.devices ?? fresh.devices,
+        hotspotProfiles: stored.hotspotProfiles ?? fresh.hotspotProfiles,
+        settings: { ...fresh.settings, ...stored.settings },
+      } as DB
+    }
   } catch { /* corrupted storage falls through to seed */ }
   const db = seedDB()
   localStorage.setItem(DB_KEY, JSON.stringify(db))
