@@ -59,6 +59,7 @@ export default function App() {
           <Route path="/developer-login" element={<DevLogin />} />
           <Route element={<Protected />}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/developer" element={<Developer />} />
             <Route path="/credit-notes" element={<CreditNotes />} />
             <Route path="/taxes" element={<Taxes />} />
             <Route path="/ip-pools" element={<IpPools />} />
