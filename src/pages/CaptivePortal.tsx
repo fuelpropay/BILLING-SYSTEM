@@ -68,6 +68,7 @@ export default function CaptivePortal() {
           <div className="space-y-4">
             <Field label="Portal title"><input className="input" value={s.portalTitle} onChange={e => setSetting('portalTitle', e.target.value)} /></Field>
             <Field label="Welcome message"><textarea className="input min-h-20" value={s.portalWelcome} onChange={e => setSetting('portalWelcome', e.target.value)} /></Field>
+            <Field label="Ad / announcement banner"><input className="input" placeholder="Shown on the portal login page (leave blank to hide)" value={s.portalAd} onChange={e => setSetting('portalAd', e.target.value)} /></Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Brand color">
                 <div className="flex items-center gap-2">
@@ -99,6 +100,7 @@ export default function CaptivePortal() {
               <div className="w-12 h-12 mx-auto rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-white font-extrabold text-xl">F</div>
               <div className="mt-3 font-bold text-white">{s.portalTitle}</div>
               <div className="mt-1 text-xs text-white/80 leading-relaxed">{s.portalWelcome}</div>
+              {s.portalAd && <div className="mt-2 text-[10px] font-semibold text-white/95 bg-white/20 backdrop-blur rounded-lg px-2 py-1.5">{s.portalAd}</div>}
             </div>
             <div className="bg-white dark:bg-slate-900 p-5 space-y-3">
               <div className="h-9 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center px-3 text-xs text-slate-400">Phone number or username</div>

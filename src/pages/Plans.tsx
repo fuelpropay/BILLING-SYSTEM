@@ -3,7 +3,7 @@ import { useStore, fmtMoney, uid } from '../store'
 import { Card, Badge, Modal, Field } from '../components/ui'
 import type { Plan, ServiceType } from '../types'
 
-const empty: Omit<Plan, 'id'> = { name: '', serviceType: 'pppoe', speedMbps: 10, price: 1000, validityDays: 30, dataLimitGB: 0, description: '', active: true }
+const empty: Omit<Plan, 'id'> = { name: '', serviceType: 'pppoe', speedMbps: 10, price: 1000, validityDays: 30, dataLimitGB: 0, fupLimitGB: 0, fupSpeedMbps: 0, description: '', active: true }
 
 export default function Plans() {
   const { db, update, log } = useStore()
@@ -51,6 +51,7 @@ export default function Plans() {
               <ul className="mt-3 space-y-1 text-xs text-slate-500 dark:text-slate-400 flex-1">
                 <li>Speed: {p.speedMbps} Mbps</li>
                 <li>Data: {p.dataLimitGB === 0 ? 'Unlimited' : `${p.dataLimitGB} GB`}</li>
+                {p.fupLimitGB > 0 && <li>FUP: {p.fupLimitGB} GB then {p.fupSpeedMbps} Mbps</li>}
                 <li>{p.description}</li>
                 <li className="font-semibold text-slate-600 dark:text-slate-300">{count} subscriber{count === 1 ? '' : 's'}</li>
               </ul>
@@ -77,19 +78,22 @@ export default function Plans() {
       </div>
       {renderGroup('pppoe', 'PPPoE plans')}
       {renderGroup('hotspot', 'Hotspot plans')}
+      {renderGroup('static', 'Static IP plans')}
 
       <Modal open={modal} onClose={() => setModal(false)} title={editing ? 'Edit plan' : 'New plan'} wide>
         <form onSubmit={save} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Plan name"><input className="input" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
           <Field label="Service type">
             <select className="input" value={form.serviceType} onChange={e => setForm({ ...form, serviceType: e.target.value as ServiceType })}>
-              <option value="pppoe">PPPoE</option><option value="hotspot">Hotspot</option>
+              <option value="pppoe">PPPoE</option><option value="hotspot">Hotspot</option><option value="static">Static IP</option>
             </select>
           </Field>
           <Field label="Speed (Mbps)"><input className="input" type="number" min={1} required value={form.speedMbps} onChange={e => setForm({ ...form, speedMbps: Number(e.target.value) })} /></Field>
           <Field label="Price (KES)"><input className="input" type="number" min={0} required value={form.price} onChange={e => setForm({ ...form, price: Number(e.target.value) })} /></Field>
           <Field label="Validity (days)"><input className="input" type="number" min={1} required value={form.validityDays} onChange={e => setForm({ ...form, validityDays: Number(e.target.value) })} /></Field>
           <Field label="Data limit (GB, 0 = unlimited)"><input className="input" type="number" min={0} value={form.dataLimitGB} onChange={e => setForm({ ...form, dataLimitGB: Number(e.target.value) })} /></Field>
+          <Field label="FUP threshold (GB, 0 = none)"><input className="input" type="number" min={0} value={form.fupLimitGB} onChange={e => setForm({ ...form, fupLimitGB: Number(e.target.value) })} /></Field>
+          <Field label="Speed after FUP (Mbps)"><input className="input" type="number" min={0} value={form.fupSpeedMbps} onChange={e => setForm({ ...form, fupSpeedMbps: Number(e.target.value) })} /></Field>
           <div className="sm:col-span-2"><Field label="Description"><input className="input" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} /></Field></div>
           <div className="sm:col-span-2 flex justify-end gap-2 pt-2">
             <button type="button" className="btn-ghost" onClick={() => setModal(false)}>Cancel</button>

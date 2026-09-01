@@ -43,6 +43,7 @@ export default function Settings() {
         <Card title="Billing rules" subtitle="Automation behaviour" className="mt-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
             <Field label="Grace period (days)"><input className="input" type="number" min={0} value={form.graceDays} onChange={e => setForm({ ...form, graceDays: Number(e.target.value) })} /></Field>
+            <Field label="Expiry reminder (days before)"><input className="input" type="number" min={0} value={form.reminderDays} onChange={e => setForm({ ...form, reminderDays: Number(e.target.value) })} /></Field>
             <label className="flex items-center gap-3 pb-2 cursor-pointer">
               <input type="checkbox" className="w-4 h-4 accent-brand-600" checked={form.suspendOnExpiry} onChange={e => setForm({ ...form, suspendOnExpiry: e.target.checked })} />
               <span className="text-sm">Auto-suspend subscribers on expiry</span>

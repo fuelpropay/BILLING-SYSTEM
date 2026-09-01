@@ -5,7 +5,7 @@ import type { Subscriber, ServiceType, SubscriberStatus } from '../types'
 
 const empty: Omit<Subscriber, 'id'> = {
   name: '', phone: '', email: '', username: '', serviceType: 'pppoe', planId: '', routerId: '',
-  status: 'pending', balance: 0, mac: '', ip: '', createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+  status: 'pending', balance: 0, mac: '', ip: '', referredBy: null, createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + 30 * 86400000).toISOString(),
 }
 
 export default function Subscribers() {
@@ -119,7 +119,7 @@ export default function Subscribers() {
           <Field label="Email"><input className="input" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} /></Field>
           <Field label="Service type">
             <select className="input" value={form.serviceType} onChange={e => setForm({ ...form, serviceType: e.target.value as ServiceType })}>
-              <option value="pppoe">PPPoE</option><option value="hotspot">Hotspot</option>
+              <option value="pppoe">PPPoE</option><option value="hotspot">Hotspot</option><option value="static">Static IP</option>
             </select>
           </Field>
           <Field label="Plan">
@@ -135,6 +135,12 @@ export default function Subscribers() {
           <Field label="Status">
             <select className="input" value={form.status} onChange={e => setForm({ ...form, status: e.target.value as SubscriberStatus })}>
               <option value="active">Active</option><option value="pending">Pending</option><option value="suspended">Suspended</option><option value="expired">Expired</option>
+            </select>
+          </Field>
+          <Field label="Referred by agent">
+            <select className="input" value={form.referredBy ?? ''} onChange={e => setForm({ ...form, referredBy: e.target.value || null })}>
+              <option value="">Direct / none</option>
+              {db.agents.map(a => <option key={a.id} value={a.id}>{a.name} ({a.code})</option>)}
             </select>
           </Field>
           <Field label="IP address"><input className="input" value={form.ip} onChange={e => setForm({ ...form, ip: e.target.value })} placeholder="10.20.1.40" /></Field>

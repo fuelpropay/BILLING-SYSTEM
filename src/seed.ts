@@ -8,14 +8,16 @@ export const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().to
 
 export function seedDB(): DB {
   const plans: DB['plans'] = [
-    { id: 'pl1', name: 'Home Bronze 5M', serviceType: 'pppoe', speedMbps: 5, price: 1500, validityDays: 30, dataLimitGB: 0, description: 'Unlimited 5 Mbps home plan', active: true },
-    { id: 'pl2', name: 'Home Silver 10M', serviceType: 'pppoe', speedMbps: 10, price: 2500, validityDays: 30, dataLimitGB: 0, description: 'Unlimited 10 Mbps home plan', active: true },
-    { id: 'pl3', name: 'Home Gold 20M', serviceType: 'pppoe', speedMbps: 20, price: 4000, validityDays: 30, dataLimitGB: 0, description: 'Unlimited 20 Mbps home plan', active: true },
-    { id: 'pl4', name: 'Business 50M', serviceType: 'pppoe', speedMbps: 50, price: 9000, validityDays: 30, dataLimitGB: 0, description: 'Priority support business fibre', active: true },
-    { id: 'pl5', name: 'Hotspot 1 Hour', serviceType: 'hotspot', speedMbps: 3, price: 20, validityDays: 1, dataLimitGB: 1, description: '1 hour / 1 GB hotspot bundle', active: true },
-    { id: 'pl6', name: 'Hotspot Daily', serviceType: 'hotspot', speedMbps: 5, price: 50, validityDays: 1, dataLimitGB: 5, description: '24 hour / 5 GB hotspot bundle', active: true },
-    { id: 'pl7', name: 'Hotspot Weekly', serviceType: 'hotspot', speedMbps: 5, price: 250, validityDays: 7, dataLimitGB: 30, description: '7 days / 30 GB hotspot bundle', active: true },
-    { id: 'pl8', name: 'Hotspot Monthly', serviceType: 'hotspot', speedMbps: 10, price: 1000, validityDays: 30, dataLimitGB: 200, description: '30 days / 200 GB hotspot bundle', active: true },
+    { id: 'pl1', name: 'Home Bronze 5M', serviceType: 'pppoe', speedMbps: 5, price: 1500, validityDays: 30, dataLimitGB: 0, fupLimitGB: 300, fupSpeedMbps: 2, description: 'Unlimited 5 Mbps home plan', active: true },
+    { id: 'pl2', name: 'Home Silver 10M', serviceType: 'pppoe', speedMbps: 10, price: 2500, validityDays: 30, dataLimitGB: 0, fupLimitGB: 600, fupSpeedMbps: 4, description: 'Unlimited 10 Mbps home plan', active: true },
+    { id: 'pl3', name: 'Home Gold 20M', serviceType: 'pppoe', speedMbps: 20, price: 4000, validityDays: 30, dataLimitGB: 0, fupLimitGB: 1000, fupSpeedMbps: 8, description: 'Unlimited 20 Mbps home plan', active: true },
+    { id: 'pl4', name: 'Business 50M', serviceType: 'pppoe', speedMbps: 50, price: 9000, validityDays: 30, dataLimitGB: 0, fupLimitGB: 0, fupSpeedMbps: 0, description: 'Priority support business fibre', active: true },
+    { id: 'pl5', name: 'Hotspot 1 Hour', serviceType: 'hotspot', speedMbps: 3, price: 20, validityDays: 1, dataLimitGB: 1, fupLimitGB: 0, fupSpeedMbps: 0, description: '1 hour / 1 GB hotspot bundle', active: true },
+    { id: 'pl6', name: 'Hotspot Daily', serviceType: 'hotspot', speedMbps: 5, price: 50, validityDays: 1, dataLimitGB: 5, fupLimitGB: 0, fupSpeedMbps: 0, description: '24 hour / 5 GB hotspot bundle', active: true },
+    { id: 'pl7', name: 'Hotspot Weekly', serviceType: 'hotspot', speedMbps: 5, price: 250, validityDays: 7, dataLimitGB: 30, fupLimitGB: 0, fupSpeedMbps: 0, description: '7 days / 30 GB hotspot bundle', active: true },
+    { id: 'pl8', name: 'Hotspot Monthly', serviceType: 'hotspot', speedMbps: 10, price: 1000, validityDays: 30, dataLimitGB: 200, fupLimitGB: 0, fupSpeedMbps: 0, description: '30 days / 200 GB hotspot bundle', active: true },
+    { id: 'pl9', name: 'Static IP 10M', serviceType: 'static', speedMbps: 10, price: 5500, validityDays: 30, dataLimitGB: 0, fupLimitGB: 0, fupSpeedMbps: 0, description: 'Dedicated static IP address, 10 Mbps', active: true },
+    { id: 'pl10', name: 'Static IP 25M', serviceType: 'static', speedMbps: 25, price: 12000, validityDays: 30, dataLimitGB: 0, fupLimitGB: 0, fupSpeedMbps: 0, description: 'Dedicated static IP address, 25 Mbps', active: true },
   ]
 
   const routers: DB['routers'] = [
@@ -33,7 +35,8 @@ export function seedDB(): DB {
   const subscribers: DB['subscribers'] = first.map((f, i) => {
     const l = last[i % last.length]
     const isHotspot = i % 3 === 2
-    const plan = plans[isHotspot ? 4 + (i % 4) : i % 4]
+    const isStatic = i % 10 === 4
+    const plan = isStatic ? plans[8 + (i % 2)] : isHotspot ? plans[4 + (i % 4)] : plans[i % 4]
     const status = statuses[i % statuses.length]
     const createdDays = 10 + ((i * 37) % 300)
     return {
@@ -42,13 +45,14 @@ export function seedDB(): DB {
       phone: `+2547${String(10000000 + i * 137913).slice(0, 8)}`,
       email: `${f.toLowerCase()}.${l.toLowerCase()}${i}@mail.com`,
       username: `${f.toLowerCase()}${l.toLowerCase().slice(0, 2)}${100 + i}`,
-      serviceType: isHotspot ? 'hotspot' : 'pppoe',
+      serviceType: isStatic ? 'static' : isHotspot ? 'hotspot' : 'pppoe',
       planId: plan.id,
       routerId: routers[i % routers.length].id,
       status,
       balance: status === 'expired' ? plan.price : i % 5 === 0 ? plan.price / 2 : 0,
       mac: `AA:BB:CC:${(16 + i).toString(16).toUpperCase().padStart(2, '0')}:${(32 + i).toString(16).toUpperCase().padStart(2, '0')}:${(48 + i).toString(16).toUpperCase().padStart(2, '0')}`,
-      ip: `10.20.${(i % 5) + 1}.${10 + i}`,
+      ip: isStatic ? `196.201.${10 + (i % 4)}.${20 + i}` : `10.20.${(i % 5) + 1}.${10 + i}`,
+      referredBy: null,
       createdAt: daysAgo(createdDays),
       expiresAt: status === 'expired' ? daysAgo(3 + (i % 9)) : daysAhead(2 + ((i * 7) % 28)),
     }
@@ -199,9 +203,57 @@ export function seedDB(): DB {
     { id: 'hp4', name: 'Ruaka Market', routerId: 'rt4', rateLimitMbps: 5, sessionTimeoutMin: 720, idleTimeoutMin: 20, sharedUsers: 1, roaming: true },
   ]
 
+  const agents: DB['agents'] = [
+    { id: 'ag1', name: 'Kevin Ouma', phone: '+254711223344', code: 'AGENT-KEV', commissionPct: 10, active: true, createdAt: daysAgo(120) },
+    { id: 'ag2', name: 'Sharon Kamande', phone: '+254722334455', code: 'AGENT-SHAR', commissionPct: 8, active: true, createdAt: daysAgo(90) },
+    { id: 'ag3', name: 'Moses Kimathi', phone: '+254733445566', code: 'AGENT-MOSE', commissionPct: 12, active: false, createdAt: daysAgo(200) },
+  ]
+  subscribers.forEach((s, i) => {
+    if (i % 4 === 0) s.referredBy = agents[i % agents.length].id
+  })
+
+  const agentPayouts: DB['agentPayouts'] = [
+    { id: 'ap1', agentId: 'ag1', amount: 8400, period: 'August 2026', status: 'paid', createdAt: daysAgo(3) },
+    { id: 'ap2', agentId: 'ag2', amount: 5100, period: 'August 2026', status: 'paid', createdAt: daysAgo(3) },
+    { id: 'ap3', agentId: 'ag1', amount: 1200, period: 'September 2026 (to date)', status: 'pending', createdAt: daysAgo(0) },
+  ]
+
+  const inventory: DB['inventory'] = [
+    { id: 'inv1', name: 'MikroTik hAP lite', sku: 'MT-HAP-LITE', category: 'CPE Router', supplier: 'Techbox Kenya', cost: 4500, serial: 'SN9201', status: 'deployed', location: 'subscriber', assignedTo: 'sb4', notes: 'ONU at customer site' },
+    { id: 'inv2', name: 'MikroTik hAP ac3', sku: 'MT-HAP-AC3', category: 'CPE Router', supplier: 'Techbox Kenya', cost: 12000, serial: 'SN9202', status: 'in_stock', location: 'stockroom', assignedTo: '', notes: '' },
+    { id: 'inv3', name: 'TP-Link EAP225 AP', sku: 'TP-EAP225', category: 'Access Point', supplier: 'Spectrum Ltd', cost: 14500, serial: 'SN9203', status: 'deployed', location: 'router', assignedTo: 'rt3', notes: 'Kasarani kiosk ceiling mount' },
+    { id: 'inv4', name: 'GPON ONU Huawei HG8145V5', sku: 'HW-ONU-8145', category: 'ONU', supplier: 'FiberHub EA', cost: 3800, serial: 'SN9204', status: 'deployed', location: 'subscriber', assignedTo: 'sb11', notes: '' },
+    { id: 'inv5', name: 'Fiber drop cable 100m', sku: 'FB-DROP-100', category: 'Consumable', supplier: 'FiberHub EA', cost: 2500, serial: '', status: 'in_stock', location: 'stockroom', assignedTo: '', notes: 'Qty tracked per unit' },
+    { id: 'inv6', name: 'MikroTik hAP lite', sku: 'MT-HAP-LITE', category: 'CPE Router', supplier: 'Techbox Kenya', cost: 4500, serial: 'SN9206', status: 'faulty', location: 'stockroom', assignedTo: '', notes: 'Dead PSU — RMA requested' },
+    { id: 'inv7', name: 'Ubiquiti LiteBeam M5', sku: 'UB-LBE-M5', category: 'Radio', supplier: 'Wavetek', cost: 6900, serial: 'SN9207', status: 'deployed', location: 'subscriber', assignedTo: 'sb19', notes: 'PtP link to AP-EMBAKASI-01' },
+    { id: 'inv8', name: '24U Network Cabinet', sku: 'CAB-24U', category: 'Infrastructure', supplier: 'MetalWorks', cost: 28000, serial: '', status: 'deployed', location: 'router', assignedTo: 'rt1', notes: 'Westlands POP cabinet' },
+  ]
+
+  const fieldJobs: DB['fieldJobs'] = [
+    { id: 'fj1', title: 'New install - 20M fibre', kind: 'installation', subscriberId: 'sb23', ticketId: null, assignee: 'Dennis Kiprop', scheduledAt: daysAhead(1), status: 'scheduled', checklist: [{ item: 'Run drop cable', done: false }, { item: 'Install ONU', done: false }, { item: 'Configure PPPoE', done: false }, { item: 'Speed test & handover', done: false }], address: 'Kilimani, Argwings Kodhek Rd', notes: 'Customer available after 10AM' },
+    { id: 'fj2', title: 'Relocate AP antenna', kind: 'relocation', subscriberId: null, ticketId: 'tk4', assignee: 'Felix Omondi', scheduledAt: daysAgo(1), status: 'in_progress', checklist: [{ item: 'Survey new position', done: true }, { item: 'Move antenna', done: true }, { item: 'Re-align link', done: false }], address: 'Ruaka site rooftop', notes: 'Coordinate with caretaker' },
+    { id: 'fj3', title: 'Investigate slow speeds', kind: 'maintenance', subscriberId: 'sb2', ticketId: 'tk1', assignee: 'Dennis Kiprop', scheduledAt: hoursAgo(6), status: 'done', checklist: [{ item: 'Check signal levels', done: true }, { item: 'Swap CPE', done: true }, { item: 'Verify speed', done: true }], address: 'Kilimani Plaza, 4th floor', notes: 'Faulty PSU replaced' },
+    { id: 'fj4', title: 'Site survey - Embakasi hotspot', kind: 'survey', subscriberId: null, ticketId: null, assignee: 'Felix Omondi', scheduledAt: daysAhead(3), status: 'scheduled', checklist: [{ item: 'Measure RF coverage', done: false }, { item: 'Identify AP mounts', done: false }], address: 'Embakasi market square', notes: '' },
+  ]
+
+  const smsTemplates: DB['smsTemplates'] = [
+    { id: 'tpl1', name: 'Invoice issued', kind: 'invoice', channel: 'sms', body: 'Dear $NAME, your invoice $INVOICE of $AMOUNT is due on $DATE. Pay via Paybill $PAYBILL.', active: true },
+    { id: 'tpl2', name: 'Payment received', kind: 'payment', channel: 'sms', body: 'Payment of $AMOUNT received ($RECEIPT). Thank you, $NAME!', active: true },
+    { id: 'tpl3', name: 'Expiry reminder', kind: 'expiry', channel: 'sms', body: 'Hi $NAME, your plan expires on $DATE. Renew via M-Pesa Paybill $PAYBILL to stay online.', active: true },
+    { id: 'tpl4', name: 'WhatsApp welcome', kind: 'broadcast', channel: 'whatsapp', body: 'Welcome to $COMPANY, $NAME! Your username is $USERNAME. Support: $PHONE.', active: true },
+    { id: 'tpl5', name: 'Payment reminder (WhatsApp)', kind: 'payment', channel: 'whatsapp', body: 'Reminder: invoice $INVOICE of $AMOUNT is outstanding. Pay via Paybill $PAYBILL.', active: true },
+  ]
+
+  const olts: DB['olts'] = [
+    { id: 'olt1', name: 'OLT-WESTLANDS-01', vendor: 'ZTE C320', ip: '10.99.0.2', location: 'Westlands POP', routerId: 'rt1', ports: 16, onusOnline: 143, onusTotal: 160, snmpOk: true, lastPollAt: hoursAgo(0) },
+    { id: 'olt2', name: 'OLT-KILIMANI-01', vendor: 'Huawei MA5800', ip: '10.99.1.2', location: 'Kilimani', routerId: 'rt2', ports: 8, onusOnline: 61, onusTotal: 64, snmpOk: true, lastPollAt: hoursAgo(0) },
+    { id: 'olt3', name: 'OLT-EMBAKASI-01', vendor: 'ZTE C320', ip: '10.99.4.2', location: 'Embakasi', routerId: 'rt5', ports: 8, onusOnline: 0, onusTotal: 48, snmpOk: false, lastPollAt: hoursAgo(26) },
+  ]
+
   return {
     subscribers, plans, invoices, payments, vouchers, routers, sessions,
     tickets, expenses, sms, users, audit, promos, devices, hotspotProfiles,
+    inventory, fieldJobs, agents, agentPayouts, smsTemplates, olts,
     settings: {
       companyName: 'FuelPro Networks',
       supportEmail: 'support@fuelpro.co.ke',
@@ -211,11 +263,13 @@ export function seedDB(): DB {
       smsSenderId: 'FUELPRO',
       suspendOnExpiry: true,
       graceDays: 3,
+      reminderDays: 3,
       portalTitle: 'FuelPro Customer Portal',
       portalWelcome: 'Manage your subscription, check usage and top up instantly.',
       portalColor: '#1b92f5',
       portalAllowVoucher: true,
       portalAllowTopup: true,
+      portalAd: 'This month: double data on all Hotspot Weekly plans!',
     },
   }
 }

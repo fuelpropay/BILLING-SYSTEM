@@ -22,6 +22,13 @@ import Promos from './pages/Promos'
 import Devices from './pages/Devices'
 import CaptivePortal from './pages/CaptivePortal'
 import Portal from './pages/Portal'
+import Radius from './pages/Radius'
+import Inventory from './pages/Inventory'
+import FieldJobs from './pages/FieldJobs'
+import Agents from './pages/Agents'
+import SmsTemplates from './pages/SmsTemplates'
+import Onboarding from './pages/Onboarding'
+import Olts from './pages/Olts'
 
 function Protected() {
   const { authed } = useStore()
@@ -52,6 +59,13 @@ export default function App() {
             <Route path="/captive-portal" element={<CaptivePortal />} />
             <Route path="/sms" element={<SmsLog />} />
             <Route path="/users" element={<Users />} />
+            <Route path="/radius" element={<Radius />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/field-jobs" element={<FieldJobs />} />
+            <Route path="/agents" element={<Agents />} />
+            <Route path="/sms-templates" element={<SmsTemplates />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/olts" element={<Olts />} />
             <Route path="/audit" element={<AuditLog />} />
             <Route path="/settings" element={<Settings />} />
           </Route>

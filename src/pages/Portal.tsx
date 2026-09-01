@@ -101,6 +101,7 @@ export default function Portal() {
             <div className="w-12 h-12 mx-auto rounded-2xl flex items-center justify-center text-white font-extrabold text-xl" style={{ background: s.portalColor }}>F</div>
             <h1 className="mt-4 text-xl font-extrabold text-center text-slate-900 dark:text-white">{s.portalTitle}</h1>
             <p className="mt-1 text-sm text-center text-slate-500 dark:text-slate-400">{s.portalWelcome}</p>
+            {s.portalAd && <p className="mt-2 text-xs font-semibold text-center rounded-lg px-3 py-1.5" style={{ background: `${s.portalColor}1f`, color: s.portalColor }}>{s.portalAd}</p>}
             <form onSubmit={signIn} className="mt-6 space-y-4">
               {err && <div className="text-sm rounded-lg px-3 py-2 border text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20">{err}</div>}
               <input className="input" value={username} onChange={e => setUsername(e.target.value)} placeholder="Username or phone number" required />

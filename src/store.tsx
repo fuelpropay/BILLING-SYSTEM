@@ -35,9 +35,17 @@ function loadDB(): DB {
       return {
         ...fresh,
         ...stored,
+        plans: (stored.plans ?? fresh.plans).map(p => ({ ...p, fupLimitGB: p.fupLimitGB ?? 0, fupSpeedMbps: p.fupSpeedMbps ?? 0 })),
+        subscribers: (stored.subscribers ?? fresh.subscribers).map(s => ({ ...s, referredBy: s.referredBy ?? null })),
         promos: stored.promos ?? fresh.promos,
         devices: stored.devices ?? fresh.devices,
         hotspotProfiles: stored.hotspotProfiles ?? fresh.hotspotProfiles,
+        inventory: stored.inventory ?? fresh.inventory,
+        fieldJobs: stored.fieldJobs ?? fresh.fieldJobs,
+        agents: stored.agents ?? fresh.agents,
+        agentPayouts: stored.agentPayouts ?? fresh.agentPayouts,
+        smsTemplates: stored.smsTemplates ?? fresh.smsTemplates,
+        olts: stored.olts ?? fresh.olts,
         settings: { ...fresh.settings, ...stored.settings },
       } as DB
     }

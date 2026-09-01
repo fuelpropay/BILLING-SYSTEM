@@ -1,5 +1,5 @@
 export type SubscriberStatus = 'active' | 'suspended' | 'expired' | 'pending'
-export type ServiceType = 'hotspot' | 'pppoe'
+export type ServiceType = 'hotspot' | 'pppoe' | 'static'
 
 export interface Subscriber {
   id: string
@@ -14,6 +14,7 @@ export interface Subscriber {
   balance: number
   mac: string
   ip: string
+  referredBy: string | null
   createdAt: string
   expiresAt: string
 }
@@ -26,6 +27,8 @@ export interface Plan {
   price: number
   validityDays: number
   dataLimitGB: number // 0 = unlimited
+  fupLimitGB: number // 0 = no fair-usage policy
+  fupSpeedMbps: number // speed after FUP threshold; ignored when no FUP
   description: string
   active: boolean
 }
@@ -148,11 +151,13 @@ export interface Settings {
   smsSenderId: string
   suspendOnExpiry: boolean
   graceDays: number
+  reminderDays: number
   portalTitle: string
   portalWelcome: string
   portalColor: string
   portalAllowVoucher: boolean
   portalAllowTopup: boolean
+  portalAd: string
 }
 
 export interface Promo {
@@ -191,6 +196,76 @@ export interface HotspotProfile {
   roaming: boolean
 }
 
+export interface InventoryItem {
+  id: string
+  name: string
+  sku: string
+  category: string
+  supplier: string
+  cost: number
+  serial: string
+  status: 'in_stock' | 'deployed' | 'faulty' | 'returned'
+  location: 'stockroom' | 'subscriber' | 'router'
+  assignedTo: string // subscriber id or router id
+  notes: string
+}
+
+export interface FieldJob {
+  id: string
+  title: string
+  kind: 'installation' | 'maintenance' | 'upgrade' | 'survey' | 'relocation'
+  subscriberId: string | null
+  ticketId: string | null
+  assignee: string
+  scheduledAt: string
+  status: 'scheduled' | 'in_progress' | 'done' | 'cancelled'
+  checklist: { item: string; done: boolean }[]
+  address: string
+  notes: string
+}
+
+export interface AgentAccount {
+  id: string
+  name: string
+  phone: string
+  code: string
+  commissionPct: number
+  active: boolean
+  createdAt: string
+}
+
+export interface AgentPayout {
+  id: string
+  agentId: string
+  amount: number
+  period: string
+  status: 'pending' | 'paid'
+  createdAt: string
+}
+
+export interface SmsTemplate {
+  id: string
+  name: string
+  kind: SmsMessage['kind']
+  channel: 'sms' | 'whatsapp'
+  body: string
+  active: boolean
+}
+
+export interface OLT {
+  id: string
+  name: string
+  vendor: string
+  ip: string
+  location: string
+  routerId: string
+  ports: number
+  onusOnline: number
+  onusTotal: number
+  snmpOk: boolean
+  lastPollAt: string
+}
+
 export interface DB {
   subscribers: Subscriber[]
   plans: Plan[]
@@ -208,4 +283,10 @@ export interface DB {
   promos: Promo[]
   devices: BoundDevice[]
   hotspotProfiles: HotspotProfile[]
+  inventory: InventoryItem[]
+  fieldJobs: FieldJob[]
+  agents: AgentAccount[]
+  agentPayouts: AgentPayout[]
+  smsTemplates: SmsTemplate[]
+  olts: OLT[]
 }
