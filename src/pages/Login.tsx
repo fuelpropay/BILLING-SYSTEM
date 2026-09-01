@@ -15,14 +15,16 @@ export default function Login() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    setTimeout(() => {
-      if (login(username, password)) {
-        navigate('/')
-      } else {
-        setError('Invalid username or password. Try the demo credentials shown below.')
+    login(username, password).then(ok => {
+      if (ok) navigate('/')
+      else {
+        setError('Invalid username or password.')
         setLoading(false)
       }
-    }, 400)
+    }).catch(() => {
+      setError('Authentication service unreachable.')
+      setLoading(false)
+    })
   }
 
   return (
@@ -57,9 +59,6 @@ export default function Login() {
           <button type="submit" disabled={loading} className="btn-primary w-full !py-2.5">
             {loading ? 'Signing in…' : 'Sign in'}
           </button>
-          <div className="rounded-lg bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-500/20 px-3 py-2.5 text-xs text-brand-800 dark:text-brand-300">
-            <span className="font-bold">Demo credentials</span> — Username: <code className="font-mono font-bold">ADMIN</code> · Password: <code className="font-mono font-bold">ADMIN</code>
-          </div>
         </form>
         <p className="text-center text-xs text-slate-400 mt-6">FuelPro Billing System · Billing, Hotspot, PPPoE & RADIUS-ready</p>
       </div>

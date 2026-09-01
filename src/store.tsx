@@ -1,9 +1,10 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { DB } from './types'
 import { seedDB, uid } from './seed'
+import { apiLogin, apiGetState, apiPutState } from './api'
 
 const DB_KEY = 'fuelpro_billing_db_v1'
-const AUTH_KEY = 'fuelpro_billing_auth_v1'
+const TOKEN_KEY = 'fuelpro_billing_token'
 
 export const fmtMoney = (n: number) => `KES ${n.toLocaleString('en-KE', { maximumFractionDigits: 0 })}`
 export const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
@@ -18,37 +19,30 @@ interface StoreCtx {
   resetData: () => void
   authed: boolean
   actor: string
-  login: (username: string, password: string) => boolean
+  login: (username: string, password: string) => Promise<boolean>
   logout: () => void
   theme: 'dark' | 'light'
   toggleTheme: () => void
+  remoteSynced: boolean
 }
 
 const Ctx = createContext<StoreCtx | null>(null)
 
+function normalize(db: Partial<DB>): DB {
+  const fresh = seedDB()
+  return {
+    ...fresh,
+    ...db,
+    plans: (db.plans ?? fresh.plans).map(p => ({ ...p, fupLimitGB: p.fupLimitGB ?? 0, fupSpeedMbps: p.fupSpeedMbps ?? 0 })),
+    subscribers: (db.subscribers ?? fresh.subscribers).map(s => ({ ...s, referredBy: s.referredBy ?? null })),
+    settings: { ...fresh.settings, ...db.settings },
+  } as DB
+}
+
 function loadDB(): DB {
   try {
     const raw = localStorage.getItem(DB_KEY)
-    if (raw) {
-      const stored = JSON.parse(raw) as Partial<DB>
-      const fresh = seedDB()
-      return {
-        ...fresh,
-        ...stored,
-        plans: (stored.plans ?? fresh.plans).map(p => ({ ...p, fupLimitGB: p.fupLimitGB ?? 0, fupSpeedMbps: p.fupSpeedMbps ?? 0 })),
-        subscribers: (stored.subscribers ?? fresh.subscribers).map(s => ({ ...s, referredBy: s.referredBy ?? null })),
-        promos: stored.promos ?? fresh.promos,
-        devices: stored.devices ?? fresh.devices,
-        hotspotProfiles: stored.hotspotProfiles ?? fresh.hotspotProfiles,
-        inventory: stored.inventory ?? fresh.inventory,
-        fieldJobs: stored.fieldJobs ?? fresh.fieldJobs,
-        agents: stored.agents ?? fresh.agents,
-        agentPayouts: stored.agentPayouts ?? fresh.agentPayouts,
-        smsTemplates: stored.smsTemplates ?? fresh.smsTemplates,
-        olts: stored.olts ?? fresh.olts,
-        settings: { ...fresh.settings, ...stored.settings },
-      } as DB
-    }
+    if (raw) return normalize(JSON.parse(raw) as Partial<DB>)
   } catch { /* corrupted storage falls through to seed */ }
   const db = seedDB()
   localStorage.setItem(DB_KEY, JSON.stringify(db))
@@ -57,59 +51,87 @@ function loadDB(): DB {
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [db, setDb] = useState<DB>(loadDB)
-  const [authed, setAuthed] = useState(() => localStorage.getItem(AUTH_KEY) === '1')
-  const [actor, setActor] = useState(() => localStorage.getItem(AUTH_KEY + '_user') || 'ADMIN')
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => (localStorage.getItem('fuelpro_theme') as 'dark' | 'light') || 'dark')
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY))
+  const [authed, setAuthed] = useState(() => Boolean(token))
+  const [actor, setActor] = useState(localStorage.getItem('fuelpro_billing_user') || 'ADMIN')
+  const [theme, setTheme] = useState<'dark' | 'light'>((localStorage.getItem('fuelpro_theme') as 'dark' | 'light') || 'dark')
+  const [remoteSynced, setRemoteSynced] = useState(false)
+  const pushTimer = useRef<number | undefined>(undefined)
 
-  useEffect(() => {
-    localStorage.setItem(DB_KEY, JSON.stringify(db))
-  }, [db])
-
+  useEffect(() => { localStorage.setItem(DB_KEY, JSON.stringify(db)) }, [db])
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
     localStorage.setItem('fuelpro_theme', theme)
   }, [theme])
 
-  const update = useCallback((fn: (db: DB) => DB) => setDb(prev => fn(prev)), [])
+  // hydrate from remote on (re)login; on first boot, push local seed up
+  useEffect(() => {
+    if (!token) return
+    let cancelled = false
+    apiGetState(token).then(remote => {
+      if (cancelled) return
+      if (remote && Object.keys(remote).length) {
+        setDb(normalize(remote))
+        setRemoteSynced(true)
+      } else {
+        apiPutState(token, db).then(ok => { if (!cancelled) setRemoteSynced(ok) })
+      }
+    }).catch(() => setRemoteSynced(false))
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token])
+
+  // write-through to remote (debounced)
+  const update = useCallback((fn: (db: DB) => DB) => {
+    setDb(prev => {
+      const next = fn(prev)
+      if (token) {
+        window.clearTimeout(pushTimer.current)
+        pushTimer.current = window.setTimeout(() => { apiPutState(token, next).catch(() => {}) }, 400)
+      }
+      return next
+    })
+  }, [token])
 
   const log = useCallback((action: string, entity: string, detail: string) => {
-    setDb(prev => ({
+    update(prev => ({
       ...prev,
       audit: [{ id: uid(), actor, action, entity, detail, at: new Date().toISOString() }, ...prev.audit].slice(0, 200),
     }))
-  }, [actor])
+  }, [actor, update])
 
-  const login = useCallback((username: string, password: string) => {
-    const okUser = username.trim().toUpperCase() === 'ADMIN' && password === 'ADMIN'
-    if (okUser) {
-      setAuthed(true)
-      setActor('ADMIN')
-      localStorage.setItem(AUTH_KEY, '1')
-      localStorage.setItem(AUTH_KEY + '_user', 'ADMIN')
-      setDb(prev => ({
-        ...prev,
-        audit: [{ id: uid(), actor: 'ADMIN', action: 'login', entity: 'auth', detail: 'Signed in successfully', at: new Date().toISOString() }, ...prev.audit],
-        users: prev.users.map(u => u.username === 'ADMIN' ? { ...u, lastLogin: new Date().toISOString() } : u),
-      }))
-      return true
+  const login = useCallback(async (username: string, password: string): Promise<boolean> => {
+    const res = await apiLogin(username, password)
+    if (!res.ok || !res.token) return false
+    const usr = username.trim().toUpperCase()
+    localStorage.setItem(TOKEN_KEY, res.token)
+    localStorage.setItem('fuelpro_billing_user', usr)
+    setToken(res.token)
+    setActor(usr)
+    setAuthed(true)
+    if (res.data && Object.keys(res.data).length) {
+      setDb(normalize({ ...res.data, users: (res.data as any).users?.map((u: any) => u.username === usr ? { ...u, lastLogin: new Date().toISOString() } : u) }))
     }
-    return false
+    return true
   }, [])
 
   const logout = useCallback(() => {
     setAuthed(false)
-    localStorage.removeItem(AUTH_KEY)
+    setToken(null)
+    localStorage.removeItem(TOKEN_KEY)
+    localStorage.removeItem('fuelpro_billing_user')
   }, [])
 
   const resetData = useCallback(() => {
     const fresh = seedDB()
     setDb(fresh)
     localStorage.setItem(DB_KEY, JSON.stringify(fresh))
-  }, [])
+    if (token) apiPutState(token, fresh).catch(() => {})
+  }, [token])
 
   const value = useMemo(
-    () => ({ db, update, log, resetData, authed, actor, login, logout, theme, toggleTheme: () => setTheme(t => (t === 'dark' ? 'light' : 'dark')) }),
-    [db, update, log, resetData, authed, actor, login, logout, theme]
+    () => ({ db, update, log, resetData, authed, actor, login, logout, theme, toggleTheme: () => setTheme(t => (t === 'dark' ? 'light' : 'dark')), remoteSynced }),
+    [db, update, log, resetData, authed, actor, login, logout, theme, remoteSynced]
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

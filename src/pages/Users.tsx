@@ -2,21 +2,37 @@ import React, { useState } from 'react'
 import { useStore, fmtDateTime, uid } from '../store'
 import { Card, Badge, Modal, Field } from '../components/ui'
 import type { StaffUser } from '../types'
+import { sha256Hex } from '../crypto'
 
 const roleColors: Record<string, 'red' | 'purple' | 'blue' | 'green'> = { admin: 'red', manager: 'purple', agent: 'blue', technician: 'green' }
 
 export default function Users() {
   const { db, update, log } = useStore()
   const [modal, setModal] = useState(false)
-  const [form, setForm] = useState({ name: '', username: '', role: 'agent' as StaffUser['role'] })
+  const [resetTarget, setResetTarget] = useState<StaffUser | null>(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [revealed, setRevealed] = useState<string | null>(null)
+  const [form, setForm] = useState({ name: '', username: '', role: 'agent' as StaffUser['role'], password: '' })
 
-  const add = (e: React.FormEvent) => {
+  const add = async (e: React.FormEvent) => {
     e.preventDefault()
-    const u: StaffUser = { id: uid(), ...form, active: true, lastLogin: 'never' }
+    const passwordHash = await sha256Hex(form.password)
+    const u: StaffUser = { id: uid(), name: form.name, username: form.username.trim().toUpperCase(), role: form.role, active: true, lastLogin: 'never', passwordHash }
     update(d => ({ ...d, users: [...d.users, u] }))
     log('create', 'user', `Added staff user ${form.name} (${form.role})`)
     setModal(false)
   }
+
+  const submitReset = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!resetTarget) return
+    const hash = await sha256Hex(newPassword)
+    update(d => ({ ...d, users: d.users.map(u => u.id === resetTarget.id ? { ...u, passwordHash: hash } : u) }))
+    log('update', 'user', `Reset password for ${resetTarget.username}`)
+    setRevealed(newPassword)
+  }
+
+  const closeReset = () => { setResetTarget(null); setNewPassword(''); setRevealed(null) }
 
   const toggle = (u: StaffUser) => {
     if (u.username === 'ADMIN') { alert('The primary ADMIN account cannot be deactivated.'); return }
@@ -54,6 +70,7 @@ export default function Users() {
               <span>{u.lastLogin === 'never' ? 'Never' : fmtDateTime(u.lastLogin)}</span>
             </div>
             <div className="mt-4 flex gap-2">
+              <button className="btn-ghost flex-1 !py-1.5 !text-xs" onClick={() => { setResetTarget(u); setNewPassword('') }}>Reset password</button>
               <button className={`flex-1 ${u.active ? 'btn-ghost' : 'btn-primary'} !py-1.5 !text-xs`} onClick={() => toggle(u)}>
                 {u.active ? 'Deactivate' : 'Activate'}
               </button>
@@ -67,6 +84,7 @@ export default function Users() {
         <form onSubmit={add} className="space-y-4">
           <Field label="Full name"><input className="input" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
           <Field label="Username"><input className="input" required value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} /></Field>
+          <Field label="Password"><input className="input" type="password" required value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></Field>
           <Field label="Role">
             <select className="input" value={form.role} onChange={e => setForm({ ...form, role: e.target.value as StaffUser['role'] })}>
               <option value="admin">Admin</option><option value="manager">Manager</option><option value="agent">Agent</option><option value="technician">Technician</option>
@@ -77,6 +95,29 @@ export default function Users() {
             <button type="submit" className="btn-primary">Add staff</button>
           </div>
         </form>
+      </Modal>
+
+      <Modal open={Boolean(resetTarget)} onClose={closeReset} title={resetTarget ? `Reset password — ${resetTarget.username}` : ''}>
+        {revealed ? (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-600 dark:text-slate-300">New password (shown once, save it now):</p>
+            <code className="block rounded-lg bg-slate-100 dark:bg-slate-800 px-3 py-2 font-mono text-sm font-bold">{revealed}</code>
+            <div className="flex justify-end">
+              <button type="button" className="btn-primary" onClick={closeReset}>Done</button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={submitReset} className="space-y-4">
+            <Field label="New password">
+              <input className="input" type="text" required value={newPassword} onChange={e => setNewPassword(e.target.value)} minLength={4} />
+            </Field>
+            <p className="text-xs text-slate-400">Password is stored as a SHA-256 hash — plaintext never persists.</p>
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" className="btn-ghost" onClick={closeReset}>Cancel</button>
+              <button type="submit" className="btn-primary">Set password</button>
+            </div>
+          </form>
+        )}
       </Modal>
     </div>
   )

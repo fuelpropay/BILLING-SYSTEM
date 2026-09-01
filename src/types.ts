@@ -131,6 +131,7 @@ export interface StaffUser {
   role: 'admin' | 'manager' | 'agent' | 'technician'
   active: boolean
   lastLogin: string
+  passwordHash?: string
 }
 
 export interface AuditEntry {
