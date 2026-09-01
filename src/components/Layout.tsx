@@ -88,7 +88,7 @@ const techNav = [
 ] as { to: string; label: string; icon: string; section?: string }[]
 
 export default function Layout() {
-  const { theme, toggleTheme, logout, db, role } = useStore()
+  const { theme, toggleTheme, logout, db, role, name, actor } = useStore()
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
   const items = role === 'technician' ? techNav : nav
@@ -146,10 +146,12 @@ export default function Layout() {
               : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" /></svg>}
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-brand-600/15 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs font-bold">AD</div>
+            <div className="w-8 h-8 rounded-full bg-brand-600/15 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs font-bold">
+              {(name || actor).split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+            </div>
             <div className="hidden sm:block">
-              <div className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">ADMIN</div>
-              <div className="text-[10px] text-slate-400">Administrator</div>
+              <div className="text-sm font-semibold text-slate-900 dark:text-white leading-tight">{name || actor}</div>
+              <div className="text-[10px] text-slate-400">{role.charAt(0).toUpperCase() + role.slice(1)}</div>
             </div>
           </div>
           <button onClick={() => { logout(); navigate('/login') }} className="btn-ghost !px-3 !py-1.5 text-xs">

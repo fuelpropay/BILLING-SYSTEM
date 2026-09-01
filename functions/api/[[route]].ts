@@ -282,7 +282,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       const db = (await kv.get('db', 'json')) as any
       return json(db ?? {})
     }
-    if (!STAFF.concat('technician').length) return json({ error: 'Forbidden' }, 403)
     if (request.method === 'PUT') {
       const db = await request.json().catch(() => null) as any
       if (!db) return json({ error: 'Bad JSON' }, 400)

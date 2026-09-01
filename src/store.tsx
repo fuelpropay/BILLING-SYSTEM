@@ -22,6 +22,7 @@ interface StoreCtx {
   token: string | null
   authed: boolean
   actor: string
+  name: string
   role: string
   login: (username: string, password: string) => Promise<boolean>
   logout: () => void
@@ -54,6 +55,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY))
   const [role, setRole] = useState(() => localStorage.getItem(ROLE_KEY) || 'admin')
   const [actor, setActor] = useState(localStorage.getItem(USER_KEY) || 'ADMIN')
+  const [name, setName] = useState(() => localStorage.getItem(NAME_KEY) || localStorage.getItem(USER_KEY) || 'ADMIN')
   const [theme, setTheme] = useState<'dark' | 'light'>((localStorage.getItem('fuelpro_theme') as 'dark' | 'light') || 'dark')
   const [remoteSynced, setRemoteSynced] = useState(false)
   const timer = useRef<number | undefined>(undefined)
@@ -65,7 +67,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [theme])
 
   useEffect(() => {
-    if (!token || role === 'developer') return
+    // technicians only use the scoped /my-jobs endpoints; developers use /developer/*
+    if (!token || role === 'developer' || role === 'technician') return
     let cancelled = false
     apiState(token).then(remote => {
       if (cancelled) return
@@ -102,6 +105,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setToken(res.token)
     setRole(res.role ?? 'admin')
     setActor(usr)
+    setName(res.name ?? usr)
     return true
   }, [])
 
@@ -120,8 +124,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [token, role])
 
   const value = useMemo(
-    () => ({ db, update, log, resetData, token, authed: Boolean(token), actor, role, login, logout, theme, toggleTheme: () => setTheme(t => (t === 'dark' ? 'light' : 'dark')), remoteSynced }),
-    [db, update, log, resetData, token, actor, role, login, logout, theme, remoteSynced]
+    () => ({ db, update, log, resetData, token, authed: Boolean(token), actor, name, role, login, logout, theme, toggleTheme: () => setTheme(t => (t === 'dark' ? 'light' : 'dark')), remoteSynced }),
+    [db, update, log, resetData, token, actor, name, role, login, logout, theme, remoteSynced]
   )
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
