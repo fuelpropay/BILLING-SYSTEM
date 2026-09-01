@@ -267,6 +267,75 @@ export interface OLT {
   lastPollAt: string
 }
 
+export interface CreditNote {
+  id: string
+  number: string
+  invoiceId: string
+  subscriberId: string
+  amount: number
+  reason: string
+  issuedBy: string
+  createdAt: string
+  status: 'applied' | 'draft' | 'void'
+}
+
+export interface TaxRule {
+  id: string
+  name: string
+  rate: number
+  appliesTo: 'all' | 'plan' | 'service'
+  enabled: boolean
+}
+
+export interface IpPool {
+  id: string
+  name: string
+  cidr: string
+  routerId: string
+  purpose: 'pppoe' | 'hotspot' | 'static'
+  excluded: string
+}
+
+export interface WebhookRule {
+  id: string
+  event: 'payment' | 'invoice' | 'subscriber.create' | 'ticket.open' | 'session.dropped' | 'voucher.redeemed'
+  url: string
+  secret: string
+  enabled: boolean
+  lastStatus: number | null
+  lastAttemptAt: string | null
+}
+
+export interface ApiKeyRecord {
+  id: string
+  label: string
+  keyHash: string
+  scope: 'read' | 'write' | 'full'
+  createdAt: string
+  lastUsedAt: string
+  revoked: boolean
+}
+
+export interface Announcement {
+  id: string
+  title: string
+  body: string
+  severity: 'info' | 'warning' | 'critical'
+  active: boolean
+  createdAt: string
+  expiresAt: string
+}
+
+export interface SlaPolicy {
+  id: string
+  name: string
+  priority: 'low' | 'normal' | 'high' | 'critical'
+  respondMins: number
+  resolveMins: number
+  appliesTo: ('installs' | 'faults' | 'moves' | 'upgrades')[]
+  enabled: boolean
+}
+
 export interface DB {
   subscribers: Subscriber[]
   plans: Plan[]
@@ -290,4 +359,11 @@ export interface DB {
   agentPayouts: AgentPayout[]
   smsTemplates: SmsTemplate[]
   olts: OLT[]
+  creditNotes: CreditNote[]
+  taxRules: TaxRule[]
+  ipPools: IpPool[]
+  webhookRules: WebhookRule[]
+  apiKeys: ApiKeyRecord[]
+  announcements: Announcement[]
+  slaPolicies: SlaPolicy[]
 }

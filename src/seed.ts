@@ -255,6 +255,8 @@ export function seedDB(): DB {
     subscribers, plans, invoices, payments, vouchers, routers, sessions,
     tickets, expenses, sms, users, audit, promos, devices, hotspotProfiles,
     inventory, fieldJobs, agents, agentPayouts, smsTemplates, olts,
+    creditNotes: [], taxRules: [], ipPools: [], webhookRules: [], apiKeys: [],
+    announcements: [], slaPolicies: [],
     settings: {
       companyName: 'FuelPro Networks',
       supportEmail: 'support@fuelpro.co.ke',

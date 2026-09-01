@@ -32,6 +32,14 @@ import Olts from './pages/Olts'
 import MyJobs from './pages/MyJobs'
 import Developer from './pages/Developer'
 import DevLogin from './pages/DevLogin'
+import CreditNotes from './pages/CreditNotes'
+import Taxes from './pages/Taxes'
+import IpPools from './pages/IpPools'
+import Webhooks from './pages/Webhooks'
+import ApiKeys from './pages/ApiKeys'
+import Announcements from './pages/Announcements'
+import SlaPolicies from './pages/SlaPolicies'
+import Warehouse from './pages/Warehouse'
 
 function Protected() {
   const { authed, role } = useStore()
@@ -51,6 +59,14 @@ export default function App() {
           <Route path="/developer-login" element={<DevLogin />} />
           <Route element={<Protected />}>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/credit-notes" element={<CreditNotes />} />
+            <Route path="/taxes" element={<Taxes />} />
+            <Route path="/ip-pools" element={<IpPools />} />
+            <Route path="/webhooks" element={<Webhooks />} />
+            <Route path="/api-keys" element={<ApiKeys />} />
+            <Route path="/announcements" element={<Announcements />} />
+            <Route path="/sla" element={<SlaPolicies />} />
+            <Route path="/warehouse" element={<Warehouse />} />
             <Route path="/subscribers" element={<Subscribers />} />
             <Route path="/plans" element={<Plans />} />
             <Route path="/invoices" element={<Invoices />} />
