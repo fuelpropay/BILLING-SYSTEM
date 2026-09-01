@@ -268,7 +268,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   }
 
   if (path === '/lookup' && request.method === 'GET') {
-    if (!claims || !STAFF.includes(claims.scope)) return json({ error: 'Unauthorized' }, 401)
+    if (!claims || !STAFF.concat('technician').includes(claims.scope)) return json({ error: 'Unauthorized' }, 401)
     const ids = (url.searchParams.get('ids') ?? '').split(',').filter(Boolean).slice(0, 100)
     const out: Record<string, string> = {}
     await Promise.all(ids.map(async id => { const s = await subRead(kv, id) as any; out[id] = s?.name ?? '' }))
@@ -378,7 +378,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   if (path === '/my-jobs' && request.method === 'GET') {
     if (!claims) return json({ error: 'Unauthorized' }, 401)
     const db = (await kv.get('db', 'json')) as any
-    const mine = (db?.fieldJobs ?? []).filter((j: any) => j.assignee === claims.name || j.assignee === claims.sub || j.assignee === (j.assignedTo ?? ''))
+    const mine = (db?.fieldJobs ?? []).filter((j: any) => j.assignee === claims.name || j.assignee === claims.sub)
     return json({ jobs: mine })
   }
   if (path.startsWith('/jobs/') && request.method === 'PATCH') {
