@@ -40,6 +40,11 @@ export async function apiLookup(token: string, ids: string[]) { return req(`/loo
 export async function apiMyJobs(token: string) { return req('/my-jobs', auth(token)) }
 export async function apiJobUpdate(token: string, id: string, patch: unknown) { return req(`/jobs/${id}`, jsonReq(token, patch, 'PATCH')) }
 
+export async function apiDeveloperOverview(token: string) { return req('/developer/overview', auth(token)) }
+export async function apiDeveloperUserPatch(token: string, body: { id: string; active?: boolean; password?: string }) {
+  return req('/developer/users', jsonReq(token, body, 'PATCH'))
+}
+
 export interface PortalResult { ok: boolean; token?: string; error?: string }
 export async function apiPortalLogin(username: string): Promise<PortalResult> {
   try {

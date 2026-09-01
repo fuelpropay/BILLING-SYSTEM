@@ -128,7 +128,7 @@ export interface StaffUser {
   id: string
   name: string
   username: string
-  role: 'admin' | 'manager' | 'agent' | 'technician'
+  role: 'admin' | 'manager' | 'agent' | 'technician' | 'developer'
   active: boolean
   lastLogin: string
   passwordHash?: string

@@ -158,6 +158,7 @@ export function seedDB(): DB {
   ]
 
   const users: DB['users'] = [
+    { id: 'us0', name: 'Platform Developer', username: 'DEVELOPER', role: 'developer', active: true, lastLogin: '', passwordHash: '38db14398221e79008548dd6aa0e0987ff1049f2afdb2b70ddc340df7915becc' },
     { id: 'us1', name: 'System Administrator', username: 'ADMIN', role: 'admin', active: true, lastLogin: hoursAgo(1), passwordHash: '835d6dc88b708bc646d6db82c853ef4182fabbd4a8de59c213f2b5ab3ae7d9be' },
     { id: 'us2', name: 'Dennis Kiprop', username: 'dennis', role: 'technician', active: true, lastLogin: hoursAgo(4) },
     { id: 'us3', name: 'Felix Omondi', username: 'felix', role: 'technician', active: true, lastLogin: daysAgo(1) },

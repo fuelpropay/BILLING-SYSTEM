@@ -30,11 +30,14 @@ import SmsTemplates from './pages/SmsTemplates'
 import Onboarding from './pages/Onboarding'
 import Olts from './pages/Olts'
 import MyJobs from './pages/MyJobs'
+import Developer from './pages/Developer'
+import DevLogin from './pages/DevLogin'
 
 function Protected() {
   const { authed, role } = useStore()
   const loc = useLocation()
   if (!authed) return <Navigate to="/login" replace />
+  if (role === 'developer') return loc.pathname === '/developer' ? <Developer /> : <Navigate to="/developer" replace />
   if (role === 'technician' && !['/my-jobs', '/inventory'].includes(loc.pathname)) return <Navigate to="/my-jobs" replace />
   return <Layout />
 }
@@ -45,6 +48,7 @@ export default function App() {
       <HashRouter>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/developer-login" element={<DevLogin />} />
           <Route element={<Protected />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/subscribers" element={<Subscribers />} />

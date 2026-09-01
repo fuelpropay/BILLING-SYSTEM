@@ -65,7 +65,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [theme])
 
   useEffect(() => {
-    if (!token) return
+    if (!token || role === 'developer') return
     let cancelled = false
     apiState(token).then(remote => {
       if (cancelled) return
@@ -79,7 +79,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const update = useCallback((fn: (db: DB) => DB) => {
     setDb(prev => {
       const next = fn(prev)
-      if (token && role !== 'technician') {
+      if (token && role !== 'technician' && role !== 'developer') {
         window.clearTimeout(timer.current)
         timer.current = window.setTimeout(() => { apiStatePut(token, next).catch(() => {}) }, 400)
       }

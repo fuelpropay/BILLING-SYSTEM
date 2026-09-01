@@ -37,6 +37,9 @@ const tokenAuth = async (kv: KVNamespace, request: Request): Promise<Claims | nu
   verify((request.headers.get('authorization') || '').replace('Bearer ', ''), (await kv.get('db', 'text')) ?? '')
 
 const STAFF = ['admin', 'manager', 'agent']
+// Platform-owner account lives in code (not tenant KV data). Rotate by changing this hash.
+const DEV_USER = 'DEVELOPER'
+const DEV_HASH = '38db14398221e79008548dd6aa0e0987ff1049f2afdb2b70ddc340df7915becc' // sha256('DEVELOPER')
 
 // Subscriber scale layer: per-sub keys subs:data:{id}, ordered index subs:idx, counters subs:stats, username map subs:uname
 async function subRead(kv: KVNamespace, id: string) { return kv.get(`subs:data:${id}`, 'json') }
@@ -96,6 +99,11 @@ export const onRequest: PagesFunction<Env> = async (context) => {
   // ---- auth ----
   if (path === '/login' && request.method === 'POST') {
     const { username, password } = await request.json().catch(() => ({})) as { username?: string; password?: string }
+    if ((username ?? '').trim().toUpperCase() === DEV_USER) {
+      if ((await sha256(password ?? '')) !== DEV_HASH) return json({ error: 'Invalid username or password' }, 401)
+      const token = await sign({ scope: 'developer', sub: DEV_USER, name: 'Platform Developer', exp: Date.now() + 8 * 3600e3 }, secret)
+      return json({ token, role: 'developer', name: 'Platform Developer' })
+    }
     const db = (await kv.get('db', 'json')) as any
     const users = db?.users ?? []
     const user = users.find((u: any) => u.username?.toUpperCase() === (username ?? '').trim().toUpperCase())
@@ -310,6 +318,61 @@ export const onRequest: PagesFunction<Env> = async (context) => {
     db.invoices = invoices.slice(0, 5000)
     await kv.put('db', JSON.stringify(db))
     return json({ added, next: start + ids.length, done: start + ids.length >= (idx?.ids ?? []).length })
+  }
+
+  // ---- developer console (platform owner scope) ----
+  if (path === '/developer/overview' && request.method === 'GET') {
+    if (!claims || claims.scope !== 'developer') return json({ error: 'Unauthorized' }, 401)
+    const [db, stats] = await Promise.all([kv.get('db', 'json') as Promise<any>, kv.get('subs:stats', 'json') as Promise<any>])
+    if (!db) return json({ error: 'No data' }, 404)
+    const invoices = db.invoices ?? []
+    const payments = db.payments ?? []
+    const clients = (db.users ?? []).map((u: any) => ({
+      id: u.id, name: u.name, username: u.username, role: u.role,
+      phone: u.phone ?? null, email: u.email ?? null,
+      active: Boolean(u.active), lastLogin: u.lastLogin ?? null,
+    }))
+    return json({
+      clients,
+      subscribers: stats ?? {},
+      plans: (db.plans ?? []).length,
+      routers: (db.routers ?? []).length,
+      billing: {
+        invoices: invoices.length,
+        invoicedTotal: invoices.reduce((s: number, i: any) => s + (i.amount ?? 0), 0),
+        paidTotal: payments.reduce((s: number, p: any) => s + (p.amount ?? 0), 0),
+        payments: payments.length,
+        billingRuns: (db.billingRuns ?? []).length,
+      },
+      ops: {
+        fieldJobs: {
+          total: (db.fieldJobs ?? []).length,
+          open: (db.fieldJobs ?? []).filter((j: any) => j.status !== 'done').length,
+        },
+        tickets: {
+          total: (db.tickets ?? []).length,
+          open: (db.tickets ?? []).filter((t: any) => t.status !== 'resolved' && t.status !== 'closed').length,
+        },
+      },
+      audit: (db.audit ?? []).slice(0, 60),
+      settings: { companyName: db.settings?.companyName ?? '', currency: db.settings?.currency ?? '' },
+      generatedAt: new Date().toISOString(),
+    })
+  }
+
+  if (path === '/developer/users' && request.method === 'PATCH') {
+    if (!claims || claims.scope !== 'developer') return json({ error: 'Unauthorized' }, 401)
+    const { id, active, password } = await request.json().catch(() => ({})) as any
+    const db = (await kv.get('db', 'json')) as any
+    const user = (db?.users ?? []).find((u: any) => u.id === id)
+    if (!user) return json({ error: 'User not found' }, 404)
+    if (user.role === 'developer') return json({ error: 'Cannot modify developer accounts' }, 403)
+    if (typeof active === 'boolean') user.active = active
+    if (typeof password === 'string' && password.length >= 4) user.passwordHash = await sha256(password)
+    user.lastLogin = user.lastLogin ?? null
+    db.audit = [{ id: (crypto as any).randomUUID(), actor: claims.name ?? claims.sub, action: 'update', entity: 'users', detail: `Developer ${active === false ? 'deactivated' : active === true ? 'activated' : 'updated'} ${user.username}`, at: new Date().toISOString() }, ...(db.audit ?? [])].slice(0, 200)
+    await kv.put('db', JSON.stringify(db))
+    return json({ ok: true })
   }
 
   // ---- technician field jobs (technician scope) ----
