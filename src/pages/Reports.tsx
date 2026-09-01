@@ -2,9 +2,11 @@ import React, { useMemo } from 'react'
 import { useStore, fmtMoney } from '../store'
 import { Card, downloadCSV } from '../components/ui'
 import { LineChart, BarChart, Donut } from '../components/charts'
+import { useStats, useNames } from '../apiUse'
 
 export default function Reports() {
   const { db } = useStore()
+  const stats = (useStats<any>() as any)?.subscribers ?? { total: 0, active: 0, suspended: 0, 'new': 0, byPlan: {} }
   const monthPrefix = new Date().toISOString().slice(0, 7)
 
   const revenueMonth = db.payments.filter(p => p.createdAt.startsWith(monthPrefix)).reduce((s, p) => s + p.amount, 0)
@@ -16,36 +18,30 @@ export default function Reports() {
     return { label: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }), value: db.payments.filter(p => p.createdAt.startsWith(key)).reduce((s, p) => s + p.amount, 0) }
   })
 
-  const signups = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date()
-    d.setMonth(d.getMonth() - (5 - i))
-    const key = d.toISOString().slice(0, 7)
-    return { label: d.toLocaleDateString('en-GB', { month: 'short' }), value: db.subscribers.filter(s => s.createdAt.startsWith(key)).length }
-  })
+  const signups = (['active', 'suspended', 'new'] as const).map(st => ({
+    label: st.charAt(0).toUpperCase() + st.slice(1), value: stats[st] ?? 0,
+  }))
 
   const planRevenue = db.plans.map(p => ({
     label: p.name,
-    value: db.subscribers.filter(s => s.planId === p.id && s.status === 'active').length * p.price,
+    value: (stats.byPlan?.[p.id] ?? 0) * p.price,
   })).filter(d => d.value > 0)
 
-  const statusDist = (['active', 'suspended', 'expired', 'pending'] as const).map(st => ({
-    label: st, value: db.subscribers.filter(s => s.status === st).length,
-  })).filter(d => d.value > 0)
+  const statusDist = signups.filter(d => d.value > 0)
 
-  const totalSubs = db.subscribers.length || 1
-  const churned = db.subscribers.filter(s => s.status === 'expired' || s.status === 'suspended').length
+  const totalSubs = stats.total || 1
+  const churned = (stats.suspended ?? 0) + (stats.expired ?? 0)
   const churnRate = (churned / totalSubs) * 100
-  const activeSubs = db.subscribers.filter(s => s.status === 'active').length || 1
+  const activeSubs = stats.active || 1
   const arpu = Math.round(revenueMonth / activeSubs)
 
   const usageBySub = db.devices.reduce<Record<string, number>>((acc, d) => {
     acc[d.subscriberId] = (acc[d.subscriberId] ?? 0) + d.dataDownMB + d.dataUpMB
     return acc
   }, {})
-  const topConsumers = Object.entries(usageBySub)
-    .map(([id, mb]) => ({ name: db.subscribers.find(s => s.id === id)?.name ?? id, mb }))
-    .sort((a, b) => b.mb - a.mb)
-    .slice(0, 8)
+  const usageIds = Object.entries(usageBySub).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([id]) => id)
+  const { name: subName } = useNames(usageIds)
+  const topConsumers = usageIds.map(id => ({ name: subName(id) === '—' ? id : subName(id), mb: usageBySub[id] }))
   const maxMB = topConsumers[0]?.mb ?? 1
   const fmtMB = (mb: number) => mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb} MB`
 
@@ -71,7 +67,7 @@ export default function Reports() {
         <Card title="Daily revenue — 30 days">
           <LineChart data={revenueSeries} format={v => (v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v))} />
         </Card>
-        <Card title="New signups — 6 months">
+        <Card title="Subscriber base by status">
           <BarChart data={signups} color="#1b92f5" />
         </Card>
         <Card title="Monthly recurring revenue by plan">

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useStore, fmtDateTime, uid } from '../store'
 import { Card, Badge, Modal, Field, EmptyState, SearchInput, downloadCSV } from '../components/ui'
+import { useNames, SubSelect } from '../apiUse'
 import type { BoundDevice } from '../types'
 
 const fmtMB = (mb: number) => mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb} MB`
@@ -11,13 +12,12 @@ export default function Devices() {
   const [filter, setFilter] = useState('all')
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ subscriberId: '', label: '', mac: '' })
-
-  const subName = (id: string) => db.subscribers.find(s => s.id === id)?.name ?? '—'
+  const { name: subName } = useNames(db.devices.map(d => d.subscriberId))
 
   const rows = useMemo(() => db.devices.filter(dv => {
     const text = `${dv.label} ${dv.mac} ${dv.ip} ${subName(dv.subscriberId)}`.toLowerCase()
     return text.includes(q.toLowerCase()) && (filter === 'all' || (filter === 'blocked' ? dv.blocked : !dv.blocked))
-  }), [db.devices, db.subscribers, q, filter])
+  }), [db.devices, subName, q, filter])
 
   const totalDown = db.devices.reduce((s, d) => s + d.dataDownMB, 0)
   const totalUp = db.devices.reduce((s, d) => s + d.dataUpMB, 0)
@@ -39,13 +39,13 @@ export default function Devices() {
     const mac = form.mac.trim().toUpperCase()
     if (!/^([0-9A-F]{2}:){5}[0-9A-F]{2}$/.test(mac)) { alert('Enter a valid MAC address, e.g. DE:AD:BE:EF:00:11'); return }
     if (db.devices.some(d => d.mac === mac)) { alert('This MAC address is already bound to an account.'); return }
-    const sub = db.subscribers.find(s => s.id === form.subscriberId)
+    const subNameStr = form.subscriberId ? subName(form.subscriberId) : '—'
     const device: BoundDevice = {
       id: uid(), subscriberId: form.subscriberId, label: form.label || 'Unknown device', mac,
       ip: `10.30.9.${10 + (db.devices.length % 200)}`, blocked: false, dataDownMB: 0, dataUpMB: 0, lastSeenAt: new Date().toISOString(),
     }
     update(d => ({ ...d, devices: [device, ...d.devices] }))
-    log('create', 'device', `Bound ${mac} (${device.label}) to ${sub?.name}`)
+    log('create', 'device', `Bound ${mac} (${device.label}) to ${subNameStr}`)
     setModal(false)
   }
 
@@ -61,7 +61,7 @@ export default function Devices() {
             rows.map(dv => [subName(dv.subscriberId), dv.label, dv.mac, dv.ip, dv.dataDownMB, dv.dataUpMB, dv.blocked ? 'yes' : 'no', fmtDateTime(dv.lastSeenAt)]))}>
             Export CSV
           </button>
-          <button className="btn-primary !text-xs" onClick={() => { setForm({ subscriberId: db.subscribers[0]?.id ?? '', label: '', mac: '' }); setModal(true) }}>+ Bind device</button>
+          <button className="btn-primary !text-xs" onClick={() => { setForm({ subscriberId: '', label: '', mac: '' }); setModal(true) }}>+ Bind device</button>
         </div>
       </div>
 
@@ -110,9 +110,7 @@ export default function Devices() {
       <Modal open={modal} onClose={() => setModal(false)} title="Bind device to subscriber">
         <form onSubmit={bind} className="space-y-4">
           <Field label="Subscriber">
-            <select className="input" value={form.subscriberId} onChange={e => setForm({ ...form, subscriberId: e.target.value })}>
-              {db.subscribers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.username})</option>)}
-            </select>
+            <SubSelect value={form.subscriberId} onChange={v => setForm({ ...form, subscriberId: v })} />
           </Field>
           <Field label="Device label"><input className="input" required value={form.label} onChange={e => setForm({ ...form, label: e.target.value })} placeholder="e.g. iPhone 15" /></Field>
           <Field label="MAC address"><input className="input font-mono uppercase" required value={form.mac} onChange={e => setForm({ ...form, mac: e.target.value })} placeholder="DE:AD:BE:EF:00:11" /></Field>

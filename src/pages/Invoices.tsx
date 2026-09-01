@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react'
 import { useStore, fmtMoney, fmtDate, uid } from '../store'
 import { Card, Badge, statusColor, Modal, Field, EmptyState, SearchInput, downloadCSV } from '../components/ui'
+import { useNames, SubSelect } from '../apiUse'
+import { apiBulkInvoices } from '../api'
 import type { Invoice } from '../types'
 
 export default function Invoices() {
@@ -9,13 +11,13 @@ export default function Invoices() {
   const [statusF, setStatusF] = useState('all')
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ subscriberId: '', amount: 0, note: '', dueAt: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10) })
+  const { token } = useStore()
 
-  const subName = (id: string) => db.subscribers.find(s => s.id === id)?.name ?? '—'
-
+  const { name: subName } = useNames(db.invoices.map(i => i.subscriberId))
   const rows = useMemo(() => db.invoices.filter(i => {
     const text = `${i.number} ${subName(i.subscriberId)} ${i.note}`.toLowerCase()
     return text.includes(q.toLowerCase()) && (statusF === 'all' || i.status === statusF)
-  }), [db.invoices, q, statusF, db.subscribers])
+  }), [db.invoices, q, statusF, subName])
 
   const totals = useMemo(() => ({
     paid: db.invoices.filter(i => i.status === 'paid').reduce((s, i) => s + i.paidAmount, 0),
@@ -58,27 +60,13 @@ export default function Invoices() {
     log('delete', 'invoice', `Deleted invoice ${inv.number}`)
   }
 
-  const generateMonthly = () => {
-    const planOf = (id: string) => db.plans.find(p => p.id === id)
-    const newInvoices: Invoice[] = db.subscribers
-      .filter(s => s.serviceType === 'pppoe' && s.status !== 'expired')
-      .map(s => {
-        const plan = planOf(s.planId)
-        return {
-          id: uid(),
-          number: `INV-${2400 + db.invoices.length + 1}`,
-          subscriberId: s.id,
-          amount: plan?.price ?? 0,
-          paidAmount: 0,
-          status: 'unpaid' as const,
-          issuedAt: new Date().toISOString(),
-          dueAt: new Date(Date.now() + 7 * 86400000).toISOString(),
-          note: `Monthly subscription - ${plan?.name ?? 'Plan'}`,
-        }
-      })
-    update(d => ({ ...d, invoices: [...newInvoices.map((n, i) => ({ ...n, number: `INV-${2400 + d.invoices.length + i + 1}` })), ...d.invoices] }))
-    log('create', 'invoice', `Generated ${newInvoices.length} monthly invoices`)
-    alert(`Generated ${newInvoices.length} invoices for active PPPoE subscribers.`)
+  const generateMonthly = async () => {
+    if (!token) return
+    try {
+      const r = (await apiBulkInvoices(token)) as any
+      if (r?.added) alert(`Generated ${r.added} invoices for active PPPoE subscribers.`)
+      else alert(r?.error ?? 'Bulk generation failed')
+    } catch { alert('Bulk generation failed') }
   }
 
   return (
@@ -91,7 +79,7 @@ export default function Invoices() {
         <div className="flex gap-2 flex-wrap">
           <button className="btn-ghost !text-xs" onClick={() => downloadCSV('invoices.csv', ['Number', 'Subscriber', 'Amount', 'Paid', 'Status', 'Issued', 'Due'], rows.map(i => [i.number, subName(i.subscriberId), i.amount, i.paidAmount, i.status, fmtDate(i.issuedAt), fmtDate(i.dueAt)]))}>Export CSV</button>
           <button className="btn-ghost !text-xs" onClick={generateMonthly}>Generate monthly invoices</button>
-          <button className="btn-primary !text-xs" onClick={() => { setForm({ ...form, subscriberId: db.subscribers[0]?.id ?? '' }); setModal(true) }}>+ New invoice</button>
+          <button className="btn-primary !text-xs" onClick={() => { setForm({ ...form, subscriberId: '' }); setModal(true) }}>+ New invoice</button>
         </div>
       </div>
 
@@ -135,9 +123,7 @@ export default function Invoices() {
       <Modal open={modal} onClose={() => setModal(false)} title="New invoice">
         <form onSubmit={create} className="space-y-4">
           <Field label="Subscriber">
-            <select className="input" value={form.subscriberId} onChange={e => setForm({ ...form, subscriberId: e.target.value })}>
-              {db.subscribers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.username})</option>)}
-            </select>
+            <SubSelect value={form.subscriberId} onChange={v => setForm({ ...form, subscriberId: v })} />
           </Field>
           <Field label="Amount (KES)"><input className="input" type="number" min={1} required value={form.amount} onChange={e => setForm({ ...form, amount: Number(e.target.value) })} /></Field>
           <Field label="Due date"><input className="input" type="date" value={form.dueAt} onChange={e => setForm({ ...form, dueAt: e.target.value })} /></Field>

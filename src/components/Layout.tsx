@@ -66,10 +66,16 @@ function Icon({ name }: { name: string }) {
   )
 }
 
+const techNav = [
+  { to: '/my-jobs', label: 'My Jobs', icon: 'jobs', section: 'Technician' },
+  { to: '/inventory', label: 'Inventory', icon: 'inventory' },
+] as { to: string; label: string; icon: string; section?: string }[]
+
 export default function Layout() {
-  const { theme, toggleTheme, logout, db } = useStore()
+  const { theme, toggleTheme, logout, db, role } = useStore()
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
+  const items = role === 'technician' ? techNav : nav
   const onlineRouters = db.routers.filter(r => r.status === 'online').length
   const openTickets = db.tickets.filter(t => t.status === 'open' || t.status === 'in_progress').length
 
@@ -85,7 +91,7 @@ export default function Layout() {
           </div>
         </div>
         <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
-          {nav.map(item => (
+          {items.map(item => (
             <React.Fragment key={item.to}>
               {item.section && <div className="px-3 pt-4 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{item.section}</div>}
               <NavLink to={item.to} end={item.to === '/'} onClick={() => setOpen(false)}

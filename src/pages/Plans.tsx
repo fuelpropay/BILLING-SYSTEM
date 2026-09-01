@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useStore, fmtMoney, uid } from '../store'
 import { Card, Badge, Modal, Field } from '../components/ui'
+import { useStats } from '../apiUse'
 import type { Plan, ServiceType } from '../types'
 
 const empty: Omit<Plan, 'id'> = { name: '', serviceType: 'pppoe', speedMbps: 10, price: 1000, validityDays: 30, dataLimitGB: 0, fupLimitGB: 0, fupSpeedMbps: 0, description: '', active: true }
@@ -10,6 +11,7 @@ export default function Plans() {
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Plan | null>(null)
   const [form, setForm] = useState<Omit<Plan, 'id'>>(empty)
+  const subStats = (useStats<any>() as any)?.subscribers ?? { byPlan: {} }
 
   const openNew = () => { setEditing(null); setForm(empty); setModal(true) }
   const openEdit = (p: Plan) => { setEditing(p); setForm({ ...p }); setModal(true) }
@@ -27,7 +29,7 @@ export default function Plans() {
   }
 
   const remove = (p: Plan) => {
-    const inUse = db.subscribers.filter(s => s.planId === p.id).length
+    const inUse = subStats.byPlan?.[p.id] ?? 0
     if (inUse > 0) { alert(`Cannot delete: ${inUse} subscriber(s) are on this plan.`); return }
     if (!confirm(`Delete plan ${p.name}?`)) return
     update(d => ({ ...d, plans: d.plans.filter(x => x.id !== p.id) }))
@@ -39,7 +41,7 @@ export default function Plans() {
       <h2 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-3">{title}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {db.plans.filter(p => p.serviceType === type).map(p => {
-          const count = db.subscribers.filter(s => s.planId === p.id).length
+          const count = subStats.byPlan?.[p.id] ?? 0
           return (
             <div key={p.id} className="card p-5 flex flex-col">
               <div className="flex items-start justify-between">

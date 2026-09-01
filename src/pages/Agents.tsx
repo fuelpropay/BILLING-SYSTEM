@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useStore, fmtMoney, uid } from '../store'
 import { Card, Badge, Modal, Field, EmptyState, downloadCSV } from '../components/ui'
+import { useStats } from '../apiUse'
 import type { AgentAccount } from '../types'
 
 export default function Agents() {
@@ -10,17 +11,18 @@ export default function Agents() {
   const [form, setForm] = useState({ name: '', phone: '', commissionPct: 10 })
   const [payModal, setPayModal] = useState(false)
   const [payAgent, setPayAgent] = useState<AgentAccount | null>(null)
+  const subStats = (useStats<any>() as any)?.subscribers ?? { referrals: {} }
 
   const genCode = (name: string) => 'AGENT-' + name.trim().toUpperCase().slice(0, 4)
 
   const stats = useMemo(() => db.agents.map(a => {
-    const referred = db.subscribers.filter(s => s.referredBy === a.id)
-    const revenue = db.payments.filter(p => referred.some(r => r.id === p.subscriberId)).reduce((s, p) => s + p.amount, 0)
+    const referred = subStats.referrals?.[a.id] ?? 0
+    const revenue = 0
     const commission = Math.round(revenue * a.commissionPct / 100)
     const paid = db.agentPayouts.filter(p => p.agentId === a.id && p.status === 'paid').reduce((s, p) => s + p.amount, 0)
     const pending = db.agentPayouts.filter(p => p.agentId === a.id && p.status === 'pending').reduce((s, p) => s + p.amount, 0)
-    return { agent: a, referred: referred.length, revenue, commission, paid, pending }
-  }), [db.agents, db.subscribers, db.payments, db.agentPayouts])
+    return { agent: a, referred, revenue, commission, paid, pending }
+  }), [db.agents, subStats, db.agentPayouts])
 
   const openNew = () => { setEditing(null); setForm({ name: '', phone: '', commissionPct: 10 }); setModal(true) }
   const openEdit = (a: AgentAccount) => { setEditing(a); setForm({ name: a.name, phone: a.phone, commissionPct: a.commissionPct }); setModal(true) }

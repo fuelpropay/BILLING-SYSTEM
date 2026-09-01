@@ -1,12 +1,14 @@
 import React, { useMemo, useState } from 'react'
 import { useStore, fmtDate, uid } from '../store'
 import { Card, Badge, statusColor, Modal, Field, EmptyState, SearchInput, downloadCSV } from '../components/ui'
+import { useNames, SubSelect } from '../apiUse'
+import { apiSubUpdate } from '../api'
 import type { Voucher } from '../types'
 
 const genCode = () => `${Math.random().toString(36).slice(2, 6).toUpperCase()}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`
 
 export default function Vouchers() {
-  const { db, update, log } = useStore()
+  const { db, update, log, token } = useStore()
   const [q, setQ] = useState('')
   const [statusF, setStatusF] = useState('all')
   const [modal, setModal] = useState(false)
@@ -14,6 +16,7 @@ export default function Vouchers() {
   const [form, setForm] = useState({ planId: '', count: 10, batch: '' })
   const [redeem, setRedeem] = useState({ code: '', subscriberId: '' })
   const [redeemMsg, setRedeemMsg] = useState('')
+  const { name: subName } = useNames([redeem.subscriberId])
 
   const planName = (id: string) => db.plans.find(p => p.id === id)?.name ?? '—'
 
@@ -39,22 +42,21 @@ export default function Vouchers() {
     setModal(false)
   }
 
-  const doRedeem = (e: React.FormEvent) => {
+  const doRedeem = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!token) { setRedeemMsg('Not signed in.'); return }
     const v = db.vouchers.find(x => x.code.toUpperCase() === redeem.code.trim().toUpperCase())
     if (!v) { setRedeemMsg('Voucher code not found.'); return }
     if (v.status !== 'unused') { setRedeemMsg(`Voucher is already ${v.status}.`); return }
-    const sub = db.subscribers.find(s => s.id === redeem.subscriberId)
+    if (!redeem.subscriberId) { setRedeemMsg('Select a subscriber.'); return }
     const plan = db.plans.find(p => p.id === v.planId)
-    update(d => ({
-      ...d,
-      vouchers: d.vouchers.map(x => x.id === v.id ? { ...x, status: 'used', usedBy: sub?.name ?? 'unknown' } : x),
-      subscribers: d.subscribers.map(s => s.id === redeem.subscriberId
-        ? { ...s, status: 'active', planId: v.planId, expiresAt: new Date(Date.now() + (plan?.validityDays ?? 1) * 86400000).toISOString() }
-        : s),
-    }))
-    log('update', 'voucher', `Redeemed ${v.code} for ${sub?.name}`)
-    setRedeemMsg(`Success! ${sub?.name} activated on ${plan?.name} for ${plan?.validityDays} day(s).`)
+    const expiresAt = new Date(Date.now() + (plan?.validityDays ?? 1) * 86400000).toISOString()
+    const r = (await apiSubUpdate(token, redeem.subscriberId, { status: 'active', planId: v.planId, expiresAt }).catch(() => null)) as any
+    if (!r || r.error) { setRedeemMsg('Redeem failed on server.'); return }
+    const name = subName(redeem.subscriberId)
+    update(d => ({ ...d, vouchers: d.vouchers.map(x => x.id === v.id ? { ...x, status: 'used', usedBy: name } : x) }))
+    log('update', 'voucher', `Redeemed ${v.code} for ${name}`)
+    setRedeemMsg(`Success! ${name} activated on ${plan?.name} for ${plan?.validityDays} day(s).`)
   }
 
   return (
@@ -66,7 +68,7 @@ export default function Vouchers() {
         </div>
         <div className="flex gap-2">
           <button className="btn-ghost !text-xs" onClick={() => downloadCSV('vouchers.csv', ['Code', 'Plan', 'Batch', 'Status', 'Created', 'Used by'], rows.map(v => [v.code, planName(v.planId), v.batch, v.status, fmtDate(v.createdAt), v.usedBy ?? '']))}>Export CSV</button>
-          <button className="btn-ghost !text-xs" onClick={() => { setRedeem({ code: '', subscriberId: db.subscribers[0]?.id ?? '' }); setRedeemMsg(''); setRedeemModal(true) }}>Redeem voucher</button>
+          <button className="btn-ghost !text-xs" onClick={() => { setRedeem({ code: '', subscriberId: '' }); setRedeemMsg(''); setRedeemModal(true) }}>Redeem voucher</button>
           <button className="btn-primary !text-xs" onClick={() => { setForm({ planId: db.plans.find(p => p.serviceType === 'hotspot')?.id ?? db.plans[0]?.id ?? '', count: 10, batch: '' }); setModal(true) }}>+ Generate batch</button>
         </div>
       </div>
@@ -122,9 +124,7 @@ export default function Vouchers() {
           {redeemMsg && <div className={`text-sm rounded-lg px-3 py-2 border ${redeemMsg.startsWith('Success') ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/20' : 'text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-500/10 border-rose-200 dark:border-rose-500/20'}`}>{redeemMsg}</div>}
           <Field label="Voucher code"><input className="input font-mono" required value={redeem.code} onChange={e => setRedeem({ ...redeem, code: e.target.value })} placeholder="XXXX-XXXX" /></Field>
           <Field label="Subscriber">
-            <select className="input" value={redeem.subscriberId} onChange={e => setRedeem({ ...redeem, subscriberId: e.target.value })}>
-              {db.subscribers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.username})</option>)}
-            </select>
+            <SubSelect value={redeem.subscriberId} onChange={v => setRedeem({ ...redeem, subscriberId: v })} />
           </Field>
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" className="btn-ghost" onClick={() => setRedeemModal(false)}>Close</button>

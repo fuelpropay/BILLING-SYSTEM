@@ -1,5 +1,5 @@
 import React from 'react'
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { StoreProvider, useStore } from './store'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -29,10 +29,13 @@ import Agents from './pages/Agents'
 import SmsTemplates from './pages/SmsTemplates'
 import Onboarding from './pages/Onboarding'
 import Olts from './pages/Olts'
+import MyJobs from './pages/MyJobs'
 
 function Protected() {
-  const { authed } = useStore()
+  const { authed, role } = useStore()
+  const loc = useLocation()
   if (!authed) return <Navigate to="/login" replace />
+  if (role === 'technician' && !['/my-jobs', '/inventory'].includes(loc.pathname)) return <Navigate to="/my-jobs" replace />
   return <Layout />
 }
 
@@ -68,6 +71,7 @@ export default function App() {
             <Route path="/olts" element={<Olts />} />
             <Route path="/audit" element={<AuditLog />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/my-jobs" element={<MyJobs />} />
           </Route>
           <Route path="/portal" element={<Portal />} />
           <Route path="*" element={<Navigate to="/" replace />} />

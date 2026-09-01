@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useStore, fmtDateTime, uid } from '../store'
 import { Card, Badge, statusColor, Modal, Field, EmptyState, downloadCSV } from '../components/ui'
+import { useNames, SubSelect } from '../apiUse'
 import type { FieldJob } from '../types'
 
 const kinds: FieldJob['kind'][] = ['installation', 'maintenance', 'upgrade', 'survey', 'relocation']
@@ -14,7 +15,7 @@ export default function FieldJobs() {
   const [form, setForm] = useState(empty)
 
   const technicians = db.users.filter(u => u.role === 'technician' && u.active).map(u => u.name)
-  const subName = (id: string | null) => id ? (db.subscribers.find(s => s.id === id)?.name ?? '—') : null
+  const { name: subName } = useNames(db.fieldJobs.map(j => j.subscriberId!).filter(Boolean))
 
   const rows = useMemo(() => db.fieldJobs.filter(j => statusF === 'all' || j.status === 'scheduled' || j.status === 'in_progress'), [db.fieldJobs, statusF])
 
@@ -140,10 +141,7 @@ export default function FieldJobs() {
             </select>
           </Field>
           <Field label="Customer (optional)">
-            <select className="input" value={form.subscriberId} onChange={e => setForm({ ...form, subscriberId: e.target.value })}>
-              <option value="">Site work / no customer</option>
-              {db.subscribers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.username})</option>)}
-            </select>
+            <SubSelect value={form.subscriberId} onChange={v => setForm({ ...form, subscriberId: v })} label="customer" />
           </Field>
           <Field label="Assignee">
             <select className="input" value={form.assignee} onChange={e => setForm({ ...form, assignee: e.target.value })} required>

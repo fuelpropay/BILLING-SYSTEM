@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { useStore, fmtMoney, uid } from '../store'
 import { Card, Badge, statusColor, Modal, Field, EmptyState, SearchInput, downloadCSV } from '../components/ui'
+import { useNames, SubSelect } from '../apiUse'
 import type { InventoryItem } from '../types'
 
 const empty: Omit<InventoryItem, 'id'> = { name: '', sku: '', category: 'CPE Router', supplier: '', cost: 0, serial: '', status: 'in_stock', location: 'stockroom', assignedTo: '', notes: '' }
@@ -14,8 +15,10 @@ export default function Inventory() {
   const [form, setForm] = useState(empty)
   const [assignTarget, setAssignTarget] = useState('')
 
+  const subIds = db.inventory.filter(it => it.location === 'subscriber').map(it => it.assignedTo)
+  const { name: subName } = useNames(subIds)
   const nameOf = (item: InventoryItem) => {
-    if (item.location === 'subscriber') return db.subscribers.find(s => s.id === item.assignedTo)?.name ?? '—'
+    if (item.location === 'subscriber') return subName(item.assignedTo)
     if (item.location === 'router') return db.routers.find(r => r.id === item.assignedTo)?.name ?? '—'
     return 'Stockroom'
   }
@@ -23,7 +26,7 @@ export default function Inventory() {
   const rows = useMemo(() => db.inventory.filter(it => {
     const text = `${it.name} ${it.sku} ${it.serial} ${it.category} ${it.supplier} ${nameOf(it)}`.toLowerCase()
     return text.includes(q.toLowerCase()) && (statusF === 'all' || it.status === statusF)
-  }), [db.inventory, db.subscribers, db.routers, q, statusF])
+  }), [db.inventory, subName, db.routers, q, statusF])
 
   const openNew = () => { setEditing(null); setForm(empty); setAssignTarget(''); setModal(true) }
   const openEdit = (it: InventoryItem) => { setEditing(it); setForm({ ...it }); setAssignTarget(it.assignedTo); setModal(true) }
@@ -131,13 +134,16 @@ export default function Inventory() {
               <option value="stockroom">Stockroom</option><option value="subscriber">Customer premises</option><option value="router">Router / POP</option>
             </select>
           </Field>
-          {form.location !== 'stockroom' && (
-            <Field label={form.location === 'subscriber' ? 'Assign to subscriber' : 'Assign to router'}>
+          {form.location === 'subscriber' && (
+            <Field label="Assign to subscriber">
+              <SubSelect value={assignTarget} onChange={setAssignTarget} />
+            </Field>
+          )}
+          {form.location === 'router' && (
+            <Field label="Assign to router">
               <select className="input" value={assignTarget} onChange={e => setAssignTarget(e.target.value)} required>
                 <option value="">Select…</option>
-                {form.location === 'subscriber'
-                  ? db.subscribers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)
-                  : db.routers.map(r => <option key={r.id} value={r.id}>{r.name} — {r.location}</option>)}
+                {db.routers.map(r => <option key={r.id} value={r.id}>{r.name} — {r.location}</option>)}
               </select>
             </Field>
           )}

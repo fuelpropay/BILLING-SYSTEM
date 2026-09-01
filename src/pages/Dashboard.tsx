@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useStore, fmtMoney, fmtDateTime } from '../store'
 import { Card, Badge, statusColor } from '../components/ui'
 import { LineChart, Donut } from '../components/charts'
+import { useStats, useNames } from '../apiUse'
+import type { SubscriberStats } from '../stats'
 
 function Stat({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: string }) {
   return (
@@ -19,12 +21,11 @@ function Stat({ label, value, sub, tone }: { label: string; value: string; sub: 
 
 export default function Dashboard() {
   const { db } = useStore()
+  const stats = (useStats<{ subscribers: SubscriberStats }>() as any)?.subscribers ?? { total: 0, active: 0, suspended: 0, 'new': 0, byPlan: {} }
   const today = new Date().toISOString().slice(0, 10)
-
   const revenueToday = db.payments.filter(p => p.createdAt.startsWith(today)).reduce((s, p) => s + p.amount, 0)
   const monthPrefix = today.slice(0, 7)
   const revenueMonth = db.payments.filter(p => p.createdAt.startsWith(monthPrefix)).reduce((s, p) => s + p.amount, 0)
-  const activeSubs = db.subscribers.filter(s => s.status === 'active').length
   const onlineSessions = db.sessions.filter(s => s.active).length
   const outstanding = db.invoices.filter(i => i.status !== 'paid').reduce((s, i) => s + (i.amount - i.paidAmount), 0)
   const monthExpenses = db.expenses.filter(e => e.date.startsWith(monthPrefix)).reduce((s, e) => s + e.amount, 0)
@@ -36,13 +37,9 @@ export default function Dashboard() {
     return { label: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }), value }
   })
 
-  const byPlan = db.plans.map(p => ({
-    label: p.name,
-    value: db.subscribers.filter(s => s.planId === p.id).length,
-  })).filter(d => d.value > 0)
-
+  const byPlan = db.plans.map(p => ({ label: p.name, value: stats.byPlan?.[p.id] ?? 0 })).filter(d => d.value > 0)
   const recentPayments = db.payments.slice(0, 7)
-  const subName = (id: string) => db.subscribers.find(s => s.id === id)?.name ?? '—'
+  const { name: subName } = useNames(recentPayments.map(p => p.subscriberId))
   const liveSessions = db.sessions.filter(s => s.active).slice(0, 6)
 
   return (
@@ -60,7 +57,7 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <Stat label="Revenue today" value={fmtMoney(revenueToday)} sub={`${fmtMoney(revenueMonth)} this month`} tone="bg-emerald-500" />
-        <Stat label="Active subscribers" value={String(activeSubs)} sub={`of ${db.subscribers.length} total accounts`} tone="bg-brand-500" />
+        <Stat label="Active subscribers" value={(stats.active ?? '…').toString()} sub={`of ${(stats.total ?? '…').toString()} total accounts`} tone="bg-brand-500" />
         <Stat label="Online sessions" value={String(onlineSessions)} sub={`${db.routers.filter(r => r.status === 'online').length}/${db.routers.length} routers online`} tone="bg-violet-500" />
         <Stat label="Outstanding balance" value={fmtMoney(outstanding)} sub={`${db.invoices.filter(i => i.status !== 'paid').length} unpaid invoices`} tone="bg-amber-500" />
       </div>

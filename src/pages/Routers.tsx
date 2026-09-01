@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useStore, uid } from '../store'
 import { Card, Badge, Modal, Field } from '../components/ui'
+import { useStats } from '../apiUse'
 import type { Router } from '../types'
 
 const empty: Omit<Router, 'id'> = { name: '', model: 'MikroTik RB4011', ip: '', location: '', status: 'online', uptimeHours: 0, cpuPct: 5, memPct: 20 }
@@ -10,6 +11,7 @@ export default function Routers() {
   const [modal, setModal] = useState(false)
   const [editing, setEditing] = useState<Router | null>(null)
   const [form, setForm] = useState<Omit<Router, 'id'>>(empty)
+  const subStats = (useStats<any>() as any)?.subscribers ?? { byRouter: {} }
 
   const openNew = () => { setEditing(null); setForm(empty); setModal(true) }
   const openEdit = (r: Router) => { setEditing(r); setForm({ ...r }); setModal(true) }
@@ -33,14 +35,14 @@ export default function Routers() {
   }
 
   const remove = (r: Router) => {
-    const inUse = db.subscribers.filter(s => s.routerId === r.id).length
+    const inUse = subStats.byRouter?.[r.id] ?? 0
     if (inUse > 0) { alert(`Cannot delete: ${inUse} subscriber(s) are attached to this router.`); return }
     if (!confirm(`Delete router ${r.name}?`)) return
     update(d => ({ ...d, routers: d.routers.filter(x => x.id !== r.id) }))
     log('delete', 'router', `Deleted router ${r.name}`)
   }
 
-  const subCount = (id: string) => db.subscribers.filter(s => s.routerId === id).length
+  const subCount = (id: string) => subStats.byRouter?.[id] ?? 0
   const activeSessions = (name: string) => db.sessions.filter(s => s.router === name && s.active).length
 
   return (

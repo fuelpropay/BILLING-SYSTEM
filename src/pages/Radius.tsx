@@ -59,7 +59,7 @@ export default function Radius() {
       octetsOutMB: s.uploadMB,
       durationMin: 15 + ((i * 47) % 4320),
       at: s.startedAt,
-      kind: s.active ? (i % 3 === 0 ? 'Interim-Update' : 'Start') : 'Stop',
+      kind: (s.active ? (i % 3 === 0 ? 'Interim-Update' : 'Start') : 'Stop') as 'Start' | 'Stop' | 'Interim-Update',
     })).sort((a, b) => b.at.localeCompare(a.at))
   }, [db.sessions])
 

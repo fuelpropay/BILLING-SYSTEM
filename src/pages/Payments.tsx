@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import { useStore, fmtMoney, fmtDateTime, uid } from '../store'
 import { Card, Badge, Modal, Field, EmptyState, SearchInput, downloadCSV } from '../components/ui'
 import { Donut } from '../components/charts'
+import { useNames, SubSelect } from '../apiUse'
 import type { PaymentMethod } from '../types'
 
 const methodColor: Record<string, 'green' | 'purple' | 'blue' | 'amber' | 'slate'> = {
@@ -15,12 +16,11 @@ export default function Payments() {
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({ subscriberId: '', amount: 0, method: 'mpesa' as PaymentMethod, reference: '' })
 
-  const subName = (id: string) => db.subscribers.find(s => s.id === id)?.name ?? '—'
-
+  const { name: subName } = useNames(db.payments.map(p => p.subscriberId))
   const rows = useMemo(() => db.payments.filter(p => {
     const text = `${p.receipt} ${p.reference} ${subName(p.subscriberId)}`.toLowerCase()
     return text.includes(q.toLowerCase()) && (methodF === 'all' || p.method === methodF)
-  }), [db.payments, q, methodF, db.subscribers])
+  }), [db.payments, q, methodF, subName])
 
   const total = rows.reduce((s, p) => s + p.amount, 0)
 
@@ -72,7 +72,7 @@ export default function Payments() {
         </div>
         <div className="flex gap-2">
           <button className="btn-ghost !text-xs" onClick={() => downloadCSV('payments.csv', ['Receipt', 'Subscriber', 'Amount', 'Method', 'Reference', 'Date'], rows.map(p => [p.receipt, subName(p.subscriberId), p.amount, p.method, p.reference, fmtDateTime(p.createdAt)]))}>Export CSV</button>
-          <button className="btn-primary !text-xs" onClick={() => { setForm({ subscriberId: db.subscribers[0]?.id ?? '', amount: 0, method: 'mpesa', reference: '' }); setModal(true) }}>+ Record payment</button>
+          <button className="btn-primary !text-xs" onClick={() => { setForm({ subscriberId: '', amount: 0, method: 'mpesa', reference: '' }); setModal(true) }}>+ Record payment</button>
         </div>
       </div>
 
@@ -115,9 +115,7 @@ export default function Payments() {
       <Modal open={modal} onClose={() => setModal(false)} title="Record payment">
         <form onSubmit={record} className="space-y-4">
           <Field label="Subscriber">
-            <select className="input" value={form.subscriberId} onChange={e => setForm({ ...form, subscriberId: e.target.value })}>
-              {db.subscribers.map(s => <option key={s.id} value={s.id}>{s.name} ({s.username})</option>)}
-            </select>
+            <SubSelect value={form.subscriberId} onChange={v => setForm({ ...form, subscriberId: v })} />
           </Field>
           <Field label="Amount (KES)"><input className="input" type="number" min={1} required value={form.amount} onChange={e => setForm({ ...form, amount: Number(e.target.value) })} /></Field>
           <Field label="Method">
