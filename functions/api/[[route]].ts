@@ -60,12 +60,14 @@ async function verifyToken(kv: KVNamespace, token: string): Promise<{ scope: str
   }
 }
 
+const cors = { 'access-control-allow-origin': '*', 'access-control-allow-methods': 'GET,POST,PUT,OPTIONS', 'access-control-allow-headers': 'authorization,content-type' }
 const json = (data: unknown, status = 200) =>
-  new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json' } })
+  new Response(JSON.stringify(data), { status, headers: { 'content-type': 'application/json', ...cors } })
 
 export const onRequest: PagesFunction<Env> = async (context) => {
   const { request, env } = context
   const url = new URL(request.url)
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors })
   const path = url.pathname.replace(/^\/api/, '') || '/'
   const kv = env.STATE_KV
 

@@ -1,5 +1,6 @@
-// Remote persistence + auth via Cloudflare Pages Functions (/api) backed by Cloudflare KV
-const BASE = '/api'
+// Remote persistence + auth via Cloudflare Pages Functions (/api) backed by Cloudflare KV.
+// Canonical API origin lives on the primary Cloudflare deployment; the Vercel mirror points there too.
+const BASE = 'https://fuelpro-billing.pages.dev/api'
 
 async function req(path: string, init?: RequestInit): Promise<Response> {
   return fetch(`${BASE}${path}`, init)
