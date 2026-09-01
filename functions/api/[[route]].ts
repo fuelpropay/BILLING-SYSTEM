@@ -380,6 +380,6 @@ export const onRequest: PagesFunction<Env> = async (context) => {
 
   return json({ error: 'Not found' }, 404)
   } catch (e) {
-    return json({ error: 'Internal error', detail: String(e) }, 500)
+    return json({ error: 'Internal error' }, 500)
   }
 }
