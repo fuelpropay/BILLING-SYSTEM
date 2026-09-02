@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useNavigate } from 'react-router-dom'
 import { useStore, fmtMoney, fmtDateTime } from '../store'
 import { apiDeveloperOverview, apiDeveloperUserPatch } from '../api'
 import type { AuditEntry } from '../types'
@@ -19,24 +19,32 @@ interface Overview {
 
 export default function Developer() {
   const { token, role, logout } = useStore()
+  const navigate = useNavigate()
   const [data, setData] = useState<Overview | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [pwUser, setPwUser] = useState<ClientRow | null>(null)
   const [pw, setPw] = useState('')
 
-  if (role !== 'developer') return <Navigate to="/developer-login" replace />
-
   const load = () => {
     if (!token) return
     setLoading(true)
     apiDeveloperOverview(token)
-      .then(r => { if (r?.error) setError(r.error); else setData(r as Overview) })
-      .catch(() => setError('Unreachable'))
+      .then(r => {
+        if (r?.error) setError(r.error)
+        else { setError(''); setData(r as Overview) }
+      })
+      .catch((e) => {
+        // Expired/invalid token from a previous session — clear it and send to re-login.
+        if (e?.status === 401 || e?.status === 403) { logout(); navigate('/developer-login', { replace: true }) }
+        else setError('Unreachable — the API did not respond. Try Refresh.')
+      })
       .finally(() => setLoading(false))
   }
   useEffect(load, [token]) // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { const t = window.setInterval(load, 30_000); return () => window.clearInterval(t) }, [token]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (role !== 'developer') return <Navigate to="/developer-login" replace />
 
   const toggle = (c: ClientRow) => {
     if (!token) return
