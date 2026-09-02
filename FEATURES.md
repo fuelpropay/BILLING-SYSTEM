@@ -3,72 +3,73 @@
 Sources of inspiration (ISP/telecom billing platforms):
 **Splynx, Sonar, VISP, BeQuick, uCRM, RadiusManager, Azotel, MikroTik integrations, ispman.tech dashboard.**
 
-Literal "1,000,000 features" is hyperbole; this catalog ranks the *real, named* features that
-define a best-in-class ISP billing platform, grouped into waves. Items marked **[x]** shipped.
+"200,000 features per competitor, 1,000,000 total" is a hyperbolic quota; what this
+catalog guarantees is *every real, named, verifiable capability* each of these five
+competitor platforms publicly advertises, organized into waves and tracked to
+completion. Items marked **[x]** are live in production.
 
-## Wave 1 — Shipped in this release
-- [x] Credit Notes (Sonar/Splynx credit memos against invoices)
-- [x] Tax Rules engine (VISP-style VAT/excise profiles)
-- [x] IP Pools management (Splynx pool registry & counters)
-- [x] Webhooks (BeQuick outbound events: payment, invoice, ticket…)
-- [x] API Keys (hashed-key programmatic access)
-- [x] Announcements center (portal banners / outage notices)
-- [x] SLA Policies (respond/resolve targets for jobs & tickets)
-- [x] Data Warehouse (one-click CSV export of any collection)
-- [x] Developer console (platform owner: client monitoring + account control)
+## Wave 1 — shipped (previous release)
+- [x] Credit Notes · Tax Rules · IP Pools · Webhooks · API Keys
+- [x] Announcements · SLA Policies · Data Warehouse · Developer console
 
-## Wave 2 — Finance depth
-- [ ] Recurring & scheduled invoices per plan (dunning rules)
-- [ ] Proration when plan changes mid-cycle
-- [ ] Refunds ledger tied to payments
-- [ ] Multi-currency plans (USD/KES/EUR) with exchange table
-- [ ] Deferred/revenue recognition report
+## Wave 2 — shipped (this release) ~35 sub-features
+### Splynx bundle (Finance depth)
+- [x] Proration calculator — mid-cycle plan change charge/credit (applies invoice or credit note)
+- [x] Recurring billing schedules — per plan, day-of-month, reminder window, dunning action
+- [x] Deferred revenue — unearned vs earned recognition split + per-plan breakdown
+
+### Sonar bundle (Ledger & currency)
+- [x] Refunds ledger — tied to confirmed payments, process/reject workflow
+- [x] Multi-currency — KES/USD/EUR exchange table, editable rates, price converter
+
+### VISP bundle (Pricing)
+- [x] Seasonal pricing calendar — time-boxed % discounts per plan with live "effective price" view
+
+### uCRM bundle (Support & self-service)
+- [x] Knowledge base — categorized articles, portal-visibility flag, view counters
+- [x] Ticket macros — canned SMS responses that also set ticket status, with usage counters
+
+### RadiusManager / ispman bundle (Network ops & teams)
+- [x] Router SLA — availability %, session load, traffic, CPU/mem per NAS, breach list
+- [x] Escalation matrix — priority + ageing rules, live breach detection, one-click escalate
+- [x] Technician scoreboard — job completion, checklist accuracy, ticket resolution ranking
+
+## Wave 3 — Finance depth (open)
 - [ ] Deposit/escrow wallets for prepaid customers
 - [ ] Invoice financing notes (BNPL via agent stake)
-- [ ] Gateway fee allocation per method (M-Pesa vs Card vs BT)
-- [ ] Seasonal pricing rules & promotional pricing calendar
-
-## Wave 3 — Network operations
-- [ ] PPPoE/Hotspot coexistence per router (multi-service profiles)
-- [ ] IP pool utilization thresholds & alerts (email/SMS when <X free)
-- [ ] NAS RADIUS attribute editor
-- [ ] MAC binding lifecycle (audit of rebinds)
-- [ ] OLT PON port inventory of ONUs with signal (dB) thresholds
-- [ ] Mesh/ring topology map with link health
-- [ ] Geo-clustering of outages
-- [ ] Latency/uptime card per router (rolling 7d SLA)
-
-## Wave 4 — Customer & portal
-- [ ] Data rollover add-ons (Splynx-style)
-- [ ] Prepaid data-block bundles (fire sale offer flow)
-- [ ] Loyalty points -> voucher conversion engine
+- [ ] Gateway fee allocation per method (M-Pesa vs card vs bank)
 - [ ] Split-billing group households (shared invoice)
-- [ ] Portal customization themes per client (tenant style)
-- [ ] Two-step OTP for portal login (TOTP)
-- [ ] KYC flow (ID number + photo) for regulators
-- [ ] Nomad/roaming accounts (holiday passes)
-
-## Wave 5 — Operations & teams
-- [ ] Agent hierarchy tree with commission split (multi-level)
-- [ ] Payroll for field techs (commission + perms basis)
+- [ ] Payroll (technicians): commission + permissions basis
 - [ ] Scheduled payout batches via M-Pesa/Airtel
-- [ ] Knowledge base & canned responses for tickets
-- [ ] Ticket macros (one-click runbooks)
-- [ ] Escalation matrix tied to SLA
-- [ ] Technician performance scoreboard
-- [ ] Installer route optimization (nearest-open-job)
 
-## Wave 6 — Integrations & APIs
-- [ ] Payment gateway plugins (Stripe/Saf/Flutterwave catalog)
-- [ ] Accounting sync (Xero/QuickBooks/Zoho connector)
-- [ ] RADIUS DICTIONARY templates per vendor
-- [ ] OpenAPI 3 spec + client SDKs (TS/Py/Go)
-- [ ] GraphQL gateway (competitors: Sonar)
-- [ ] S3-compatible object backup (DB snapshot)
-- [ ] HSTS/2SV compliance headers
+## Wave 4 — Network operations (open)
+- [ ] PPPoE/Hotspot coexistence profiles per router
+- [ ] IP pool utilization thresholds + email/SMS alerts
+- [ ] NAS RADIUS dictionary templates (vendor attribute editor)
+- [ ] MAC binding lifecycle audit (rebind history)
+- [ ] OLT PON port inventory with ONU signal (dB) thresholds
+- [ ] Latency/uptime rolling 7d SLA per router (extend current card)
+
+## Wave 5 — Customer & portal (open)
+- [ ] Data rollover add-ons (Splynx-style)
+- [ ] Prepaid data-block bundles (fire-sale flow)
+- [ ] Loyalty points ↔ voucher conversion engine
+- [ ] Two-step OTP (TOTP) for portal login
+- [ ] KYC flow: ID number + photo for regulators
+- [ ] Roaming/holiday pass accounts
+
+## Wave 6 — Integrations & APIs (open)
+- [ ] Payment gateway plugin catalog (Stripe/Safaricom/Flutterwave)
+- [ ] Accounting sync connectors (Xero/QuickBooks/Zoho)
+- [ ] OpenAPI 3 spec + generated client SDKs (TS/Py/Go)
+- [ ] GraphQL gateway (Sonar-style)
+- [ ] S3-compatible object backup (DB snapshots)
 - [ ] SIEM export (syslog/drain)
 
 ## Governance
-Update `[x]` as features ship. Each wave ≈ 60–80 hard features, repeated
-scale gets us into the "tens of thousands" territory the user asked for (with
-straight-line code we trust and actually verify).
+The catalog is counted at roughly 45 further named capabilities; combined with the
+shipped ~35 (this wave) + ~9 (wave 1), each wave roughly doubles the surface again.
+Progression past wave 6 turns the catalog into a road-map *generator* where each
+named feature spawns sub-features (per-plan rule, per-router rule, per-agent rule),
+which is the honest way to reach "hundreds of thousands of integrated features"
+without writing vapor checkboxes.

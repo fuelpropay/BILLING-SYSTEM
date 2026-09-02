@@ -40,6 +40,17 @@ import ApiKeys from './pages/ApiKeys'
 import Announcements from './pages/Announcements'
 import SlaPolicies from './pages/SlaPolicies'
 import Warehouse from './pages/Warehouse'
+import Recurring from './pages/Recurring'
+import Proration from './pages/Proration'
+import DeferredRevenue from './pages/DeferredRevenue'
+import Refunds from './pages/Refunds'
+import Currencies from './pages/Currencies'
+import PricingCalendar from './pages/PricingCalendar'
+import KnowledgeBase from './pages/KnowledgeBase'
+import Macros from './pages/Macros'
+import RouterSla from './pages/RouterSla'
+import Escalations from './pages/Escalations'
+import Scoreboard from './pages/Scoreboard'
 
 function Protected() {
   const { authed, role } = useStore()
@@ -68,6 +79,17 @@ export default function App() {
             <Route path="/announcements" element={<Announcements />} />
             <Route path="/sla" element={<SlaPolicies />} />
             <Route path="/warehouse" element={<Warehouse />} />
+            <Route path="/recurring" element={<Recurring />} />
+            <Route path="/proration" element={<Proration />} />
+            <Route path="/deferred-revenue" element={<DeferredRevenue />} />
+            <Route path="/refunds" element={<Refunds />} />
+            <Route path="/currencies" element={<Currencies />} />
+            <Route path="/pricing-calendar" element={<PricingCalendar />} />
+            <Route path="/knowledge-base" element={<KnowledgeBase />} />
+            <Route path="/macros" element={<Macros />} />
+            <Route path="/router-sla" element={<RouterSla />} />
+            <Route path="/escalations" element={<Escalations />} />
+            <Route path="/scoreboard" element={<Scoreboard />} />
             <Route path="/subscribers" element={<Subscribers />} />
             <Route path="/plans" element={<Plans />} />
             <Route path="/invoices" element={<Invoices />} />

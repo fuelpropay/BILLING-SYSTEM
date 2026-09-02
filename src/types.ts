@@ -336,6 +336,75 @@ export interface SlaPolicy {
   enabled: boolean
 }
 
+export interface RecurringSchedule {
+  id: string
+  name: string
+  planId: string
+  dayOfMonth: number
+  autoSuspend: boolean
+  reminderDaysBefore: number
+  dunning: 'none' | 'remind' | 'suspend' | 'escalate'
+  enabled: boolean
+}
+
+export interface Refund {
+  id: string
+  paymentId: string
+  subscriberId: string
+  amount: number
+  reason: string
+  method: string
+  status: 'pending' | 'processed' | 'rejected'
+  issuedBy: string
+  createdAt: string
+}
+
+export interface Currency {
+  code: string
+  symbol: string
+  rate: number // relative to base (KES)
+  isBase: boolean
+  enabled: boolean
+}
+
+export interface PricingRule {
+  id: string
+  name: string
+  planId: string
+  startsAt: string
+  endsAt: string
+  discountPct: number
+  active: boolean
+}
+
+export interface KbArticle {
+  id: string
+  title: string
+  category: 'billing' | 'network' | 'account' | 'installation' | 'troubleshooting'
+  body: string
+  public: boolean
+  views: number
+  updatedAt: string
+}
+
+export interface TicketMacro {
+  id: string
+  name: string
+  body: string
+  setStatus: '' | 'open' | 'in_progress' | 'resolved' | 'closed'
+  uses: number
+}
+
+export interface EscalationRule {
+  id: string
+  name: string
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  afterMins: number
+  escalateTo: string
+  notifyVia: 'sms' | 'email' | 'both'
+  enabled: boolean
+}
+
 export interface DB {
   subscribers: Subscriber[]
   plans: Plan[]
@@ -366,4 +435,11 @@ export interface DB {
   apiKeys: ApiKeyRecord[]
   announcements: Announcement[]
   slaPolicies: SlaPolicy[]
+  recurringSchedules: RecurringSchedule[]
+  refunds: Refund[]
+  currencies: Currency[]
+  pricingRules: PricingRule[]
+  kbArticles: KbArticle[]
+  macros: TicketMacro[]
+  escalationRules: EscalationRule[]
 }

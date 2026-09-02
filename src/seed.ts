@@ -257,6 +257,29 @@ export function seedDB(): DB {
     inventory, fieldJobs, agents, agentPayouts, smsTemplates, olts,
     creditNotes: [], taxRules: [], ipPools: [], webhookRules: [], apiKeys: [],
     announcements: [], slaPolicies: [],
+    recurringSchedules: [
+      { id: 'rs1', name: 'Monthly billing run', planId: '', dayOfMonth: 1, autoSuspend: true, reminderDaysBefore: 3, dunning: 'suspend', enabled: true },
+    ],
+    refunds: [],
+    currencies: [
+      { code: 'KES', symbol: 'KSh', rate: 1, isBase: true, enabled: true },
+      { code: 'USD', symbol: '$', rate: 0.0077, isBase: false, enabled: true },
+      { code: 'EUR', symbol: '€', rate: 0.0071, isBase: false, enabled: true },
+    ],
+    pricingRules: [],
+    kbArticles: [
+      { id: 'kb1', title: 'How to pay via M-Pesa', category: 'billing', body: 'Go to Paybill 400200, account = your username. Payment reflects instantly on your portal balance.', public: true, views: 0, updatedAt: new Date().toISOString() },
+      { id: 'kb2', title: 'Router lights guide', category: 'troubleshooting', body: 'Power solid, PON green = OK. LOS red = fiber issue, raise a ticket. Reboot first if all lights are normal but no internet.', public: true, views: 0, updatedAt: new Date().toISOString() },
+    ],
+    macros: [
+      { id: 'mc1', name: 'Payment confirmation', body: 'Hi {{name}}, we have received your payment of {{amount}}. Your service is active. Thank you!', setStatus: 'resolved', uses: 0 },
+      { id: 'mc2', name: 'Technician dispatched', body: 'Hi {{name}}, a technician has been dispatched to your location. Expected arrival within 4 hours.', setStatus: 'in_progress', uses: 0 },
+      { id: 'mc3', name: 'Outage notice', body: 'Hi {{name}}, we are aware of a service outage in your area. Our team is working to restore service. Sorry for the inconvenience.', setStatus: '', uses: 0 },
+    ],
+    escalationRules: [
+      { id: 'esc1', name: 'Critical ticket unaddressed', priority: 'critical', afterMins: 60, escalateTo: 'ADMIN', notifyVia: 'both', enabled: true },
+      { id: 'esc2', name: 'High priority ageing', priority: 'high', afterMins: 240, escalateTo: 'ADMIN', notifyVia: 'sms', enabled: true },
+    ],
     settings: {
       companyName: 'FuelPro Networks',
       supportEmail: 'support@fuelpro.co.ke',
