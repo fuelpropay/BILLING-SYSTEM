@@ -1,0 +1,7 @@
+name = "fuelpro-billing"
+pages_build_output_dir = "dist"
+compatibility_date = "2024-11-01"
+
+[[kv_namespaces]]
+binding = "STATE_KV"
+id = "25cb6dc294d346c4ac25f5bce903224f"
